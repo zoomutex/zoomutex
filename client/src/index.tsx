@@ -1,15 +1,14 @@
-import SocketContext, { socket } from "./context/SocketContext";
-
 import App from "./App";
+import { ContextProvider } from "./context";
 import React from "react";
 import ReactDOM from "react-dom";
 import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
   <React.StrictMode>
-    <SocketContext.Provider value={socket}>
+    <ContextProvider>
       <App />
-    </SocketContext.Provider>
+    </ContextProvider>
   </React.StrictMode>,
   document.getElementById("root")
 );
