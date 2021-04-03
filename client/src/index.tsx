@@ -1,17 +1,17 @@
-import SocketContext, {socket} from './SocketContext';
+import SocketContext, { socket } from "./context/SocketContext";
 
-import App from './App';
-import React from 'react';
-import ReactDOM from 'react-dom';
-import reportWebVitals from './reportWebVitals';
+import App from "./App";
+import React from "react";
+import ReactDOM from "react-dom";
+import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
   <React.StrictMode>
     <SocketContext.Provider value={socket}>
-    <App />
+      <App />
     </SocketContext.Provider>
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );
 
 // If you want to start measuring performance in your app, pass a function

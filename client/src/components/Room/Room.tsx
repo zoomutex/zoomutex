@@ -2,7 +2,7 @@ import "./styles.css";
 
 import React, { useContext, useEffect, useRef, useState } from "react";
 
-import SocketContext from "../../SocketContext";
+import SocketContext from "../../context/SocketContext";
 import { roomRoute } from "./route";
 import { useRouteMatch } from "react-router";
 import useUserMedia from "./useUserMedia";
