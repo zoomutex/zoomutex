@@ -1,4 +1,3 @@
-import React from "react";
 import { Redirect } from "react-router";
 import { roomRoute } from "../Room";
 import { v4 } from "uuid";
