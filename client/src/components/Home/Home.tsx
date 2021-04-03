@@ -1,7 +1,11 @@
 import React from "react";
+import { Redirect } from "react-router";
+import { roomRoute } from "../Room";
+import { v4 } from "uuid";
 
 const Home = (): JSX.Element => {
-  return <div>Home</div>;
+  const id = v4();
+  return <Redirect to={roomRoute.replace(":roomId", id)} />;
 };
 
 export default Home;
