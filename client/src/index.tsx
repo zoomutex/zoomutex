@@ -1,3 +1,5 @@
+import SocketContext, {socket} from './SocketContext';
+
 import App from './App';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -5,7 +7,9 @@ import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
+    <SocketContext.Provider value={socket}>
     <App />
+    </SocketContext.Provider>
   </React.StrictMode>,
   document.getElementById('root')
 );
