@@ -9,7 +9,6 @@ import Video from "./Video";
 import { roomRoute } from "./route";
 import { useRouteMatch } from "react-router";
 import useUserMedia from "./useUserMedia";
-import { v4 as uuid } from "uuid";
 
 interface RoomPathArgs {
   roomId?: string;
@@ -26,7 +25,7 @@ const Room = (): JSX.Element => {
   const peer = useContext(PeerContext);
 
   const [roomId] = useState<string | undefined>(match?.params.roomId);
-  const [userId] = useState<string>(uuid());
+  const userId = peer.id
 
   const userMediaStream = useUserMedia({ audio: true, video: true });
   const [streams, setStreams] = useState<Streams>({});
