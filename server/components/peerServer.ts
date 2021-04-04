@@ -16,11 +16,11 @@ const startPeerServer = (): void => {
 
     console.log(`PeerServer listening on - ${PEER_PORT}/peerServer `)
     peerServer.on('connection', (client) => { 
-      console.log(`Client connected : ` + client.getId())
+      console.log(`Peerjs client connected : ` + client.getId())
       //client.send('connected to client')
     });
     peerServer.on('disconnect', (client) => {
-      console.log(`Client disconnected : ` + client.getId())
+      console.log(`Peerjs client disconnected : ` + client.getId())
     });
     peerServer.on("message", (client, message) => {
       if (message.type == 'HEARTBEAT'){
