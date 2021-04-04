@@ -9,11 +9,23 @@ import path from "path";
 
 dotenv.config();
 
-if (!process.env.PORT) {
-  process.exit(1);
-}
+const getPort = (): number => {
+  const port = parseInt(process.env.PORT!);
 
-const PORT: number = parseInt(process.env.PORT);
+  if (!!port && port !== NaN) {
+    return port;
+  }
+
+  // Default production
+  if (process.env.NODE_ENV === "production") {
+    return 443;
+  }
+
+  // Development default
+  return 7000;
+};
+
+const PORT = getPort();
 
 // Express
 const app = express();
@@ -22,19 +34,11 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-const parent = (p: string): string => {
-  return path.dirname(p);
-};
-
 if (process.env.NODE_ENV === "production") {
-  const clientPath = parent(parent(__dirname));
-  const buildPath = path.join(clientPath, "client", "build");
-  const indexPath = path.join(buildPath, "index.html");
-
-  app.use(express.static(buildPath));
+  app.use(express.static(path.join(__dirname, "client")));
 
   app.get("/*", (req, res) => {
-    res.sendFile(indexPath);
+    res.sendFile(path.join(__dirname, "client", "index.html"));
   });
 }
 
