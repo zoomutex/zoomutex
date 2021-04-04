@@ -1,6 +1,7 @@
 import "./styles.css";
 
 import { PeerContext, SocketContext } from "../../context";
+import VideoList, { Streams } from "./VideoList";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { MediaConnection } from "peerjs";
@@ -18,11 +19,6 @@ interface UserConnectedArgs {
   userId?: string;
 }
 
-interface MediaElement {
-  stream: MediaStream;
-  userId: string;
-}
-
 const Room = (): JSX.Element => {
   const match = useRouteMatch<RoomPathArgs>(roomRoute);
 
@@ -31,8 +27,9 @@ const Room = (): JSX.Element => {
 
   const [roomId] = useState<string | undefined>(match?.params.roomId);
   const [userId] = useState<string>(uuid());
+
   const userMediaStream = useUserMedia({ audio: true, video: true });
-  const [streams, setStreams] = useState<MediaElement[]>([]);
+  const [streams, setStreams] = useState<Streams>({});
 
   const addCallToRoom = useCallback(
     (call: MediaConnection) => {
@@ -40,12 +37,18 @@ const Room = (): JSX.Element => {
 
       call.on("stream", (stream) => {
         console.log(`adding stream for ${userId}`);
-        setStreams([...streams, { userId, stream }]);
+        setStreams({
+          ...streams,
+          [userId]: stream,
+        });
       });
 
       call.on("close", () => {
         console.log(`closing call for ${userId}`);
-        setStreams(streams.filter((current) => current.userId !== userId));
+
+        const updatedStreams = { ...streams };
+        delete updatedStreams[userId];
+        setStreams(updatedStreams);
       });
 
       console.log(`user connected: ${userId}`);
@@ -75,6 +78,8 @@ const Room = (): JSX.Element => {
     for (const userId of deferredUserIds.current) {
       callPeer(userId);
     }
+
+    deferredUserIds.current = [];
   }, [callPeer]);
 
   // When we first open the app, join a room
@@ -90,10 +95,9 @@ const Room = (): JSX.Element => {
   );
 
   const onUserConnected = useCallback(
-    (args: UserConnectedArgs): void => {
-      console.log(args);
-      const { userId: connectedUserId } = args;
+    ({ userId: connectedUserId }: UserConnectedArgs): void => {
       console.log("user attempting to connect");
+
       if (!connectedUserId) {
         return;
       }
@@ -124,7 +128,8 @@ const Room = (): JSX.Element => {
   );
 
   useEffect(() => {
-    if (!roomId) {
+    if (!roomId || !userMediaStream) {
+      console.log("waiting for user media stream");
       return;
     }
 
@@ -134,14 +139,7 @@ const Room = (): JSX.Element => {
 
     peer.on("open", onPeerOpen);
     peer.on("call", answerCall);
-
-    return () => {
-      // disconnect socket
-      console.log("disconnecting")
-      socket.disconnect();
-    };
   }, [
-    addCallToRoom,
     answerCall,
     onPeerOpen,
     onUserConnected,
@@ -149,14 +147,16 @@ const Room = (): JSX.Element => {
     roomId,
     socket,
     userId,
+    userMediaStream,
   ]);
 
   useEffect(() => {
     window.onbeforeunload = () => {
       console.log("cleaning up");
       socket.disconnect();
+      peer.destroy();
     };
-  }, [socket]);
+  }, [peer, socket]);
 
   if (match === null || !match.params.roomId) {
     return <div>Invalid room</div>;
@@ -167,9 +167,7 @@ const Room = (): JSX.Element => {
       <div className="room-title">Room {match.params.roomId}</div>
       <div className="video-grid">
         <Video mediaStream={userMediaStream} />
-        {streams.map(({ stream, userId }) => (
-          <Video key={userId} mediaStream={stream} />
-        ))}
+        <VideoList streams={streams} />
       </div>
     </div>
   );
