@@ -5,11 +5,9 @@ import ReactDOM from "react-dom";
 import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
-  <React.StrictMode>
-    <ContextProvider>
-      <App />
-    </ContextProvider>
-  </React.StrictMode>,
+  <ContextProvider>
+    <App />
+  </ContextProvider>,
   document.getElementById("root")
 );
 
