@@ -7,6 +7,8 @@ import helmet from "helmet";
 import initSockets from "./sockets";
 import path from "path";
 
+import startPeerServer from '../components/peerServer'
+
 dotenv.config();
 
 const getPort = (): number => {
@@ -47,6 +49,9 @@ const httpServer = createServer(app);
 
 // Sockets
 initSockets(httpServer);
+
+// Start peerjs server
+startPeerServer()
 
 // HTTP server listen
 httpServer.listen(PORT, () => {
