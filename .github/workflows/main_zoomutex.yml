@@ -25,8 +25,8 @@ jobs:
       run: |
         cd client
         npm install
-        npm run build
-    
+        CI=false npm run build
+
     - name: server install, build
       run: |
         cd server
@@ -60,4 +60,4 @@ jobs:
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_64921bee024443ab9a443d3d0c8b28a0 }}
         package: server/
-        
+
