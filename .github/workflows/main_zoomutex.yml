@@ -33,6 +33,10 @@ jobs:
         npm install
         npm run build
 
+    - name: build server and client
+      run: |
+        ./build.sh
+
     - name: Upload artifact for deployment job
       uses: actions/upload-artifact@v2
       with:
@@ -61,4 +65,3 @@ jobs:
         app-name: 'zoomutex'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_64921bee024443ab9a443d3d0c8b28a0 }}
-        package: .
