@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+rootDir/
+*.js
+
 # dependencies
 node_modules/
 /.pnp
@@ -14,6 +17,7 @@ client/build
 server/build
 
 # misc
+.vscode
 .DS_Store
 .env.local
 .env.development.local
