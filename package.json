@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "./node_modules/.bin/ts-node-dev src/server.ts",
+    "start": "node build/src/server.js",
     "dev": "ts-node-dev --respawn --pretty --transpile-only src/server.ts",
     "build": "tsc --outDir build"
   },
