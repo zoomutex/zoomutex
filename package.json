@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node build/src/server.js",
+    "start": "npm run dev",
+    "postinstall": "tsc",
     "dev": "ts-node-dev --respawn --pretty --transpile-only src/server.ts",
-    "build": "tsc --outDir build && cp -r ./src/build build/src/"
+    "build": "tsc --outDir build"
   },
   "keywords": [],
   "author": "",
