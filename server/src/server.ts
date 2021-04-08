@@ -3,29 +3,13 @@ import * as dotenv from "dotenv";
 import cors from "cors";
 import { createServer } from "http";
 import express from "express";
+import { getPort } from "./utils";
 import helmet from "helmet";
 import initSockets from "./sockets";
 import path from "path";
-
-import startPeerServer from '../components/peerServer'
+import startPeerServer from "./peerServer";
 
 dotenv.config();
-
-const getPort = (): number => {
-  const port = parseInt(process.env.PORT!);
-
-  if (!!port && port !== NaN) {
-    return port;
-  }
-
-  // Default production
-  if (process.env.NODE_ENV === "production") {
-    return 443;
-  }
-
-  // Development default
-  return 7000;
-};
 
 const PORT = getPort();
 
@@ -51,9 +35,9 @@ const httpServer = createServer(app);
 initSockets(httpServer);
 
 // Start peerjs server
-startPeerServer()
+startPeerServer();
 
 // HTTP server listen
 httpServer.listen(PORT, () => {
-  console.log(`Listening on port ${PORT}`);
+  console.log(`HTTP server listening on port ${PORT}`);
 });
