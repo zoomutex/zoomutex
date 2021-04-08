@@ -6,6 +6,7 @@ mkdir rootDir/
 
 cd client
 rm -rf build 
+npm install
 npm run build
 mv build clientBuild
 cp -r clientBuild ../
