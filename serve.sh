@@ -9,5 +9,4 @@ cd ..
 cd server
 cp -r ../client/build src/
 
-npm run dev
-
+NODE_ENV=production npm run dev
