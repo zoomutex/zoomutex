@@ -34,8 +34,7 @@ const httpServer = createServer(app);
 // Sockets
 initSockets(httpServer);
 
-// Start peerjs server
-startPeerServer();
+app.use("/peerjs", startPeerServer(httpServer));
 
 // HTTP server listen
 httpServer.listen(PORT, () => {

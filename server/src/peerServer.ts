@@ -1,14 +1,13 @@
-import { PeerServer } from "peer";
+import { ExpressPeerServer } from "peer";
+import { Server } from "http";
 
-//Genearate a random id for a client that connects
+//Generate a random id for a client that connects
 const customGenerationFunction = () =>
   (Math.random().toString(36) + "0000000000000000000").substr(2, 16);
 
-const startPeerServer = (): void => {
+const startPeerServer = (server: Server) => {
   // Start peerServer and return id to connecting clients
-  const peerServer = PeerServer({
-    path: "/peerServer",
-    port: 9000,
+  const peerServer = ExpressPeerServer(server, {
     generateClientId: customGenerationFunction,
   });
 
@@ -33,6 +32,8 @@ const startPeerServer = (): void => {
       `Received ${message} from ` + client.getId() + " : " + message.payload
     );
   });
+
+  return peerServer
 };
 
 export default startPeerServer;
