@@ -46,6 +46,7 @@ const onJoinRoom = async (
   await socket.join(roomId);
 
   log(socket, `notifying room ${roomId}`);
+  socket.join(roomId);
   socket.to(roomId).emit("user-connected", { userId });
   socket.on("disconnected", () => onDisconnected(socket, { userId, roomId }));
 };

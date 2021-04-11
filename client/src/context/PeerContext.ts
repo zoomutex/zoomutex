@@ -1,15 +1,13 @@
 import Peer from "peerjs";
 import React from "react";
-import { getPort } from "../utils";
 
-const PORT = getPort();
-const URL = process.env.NODE_ENV === "production" ? "/" : "http://localhost";
+const URL = process.env.NODE_ENV === "production" ? "/" : "localhost";
 const ENDPOINT = "/peerServer";
 
 export const peer = new Peer("", {
   //  debug: 2,
   host: URL,
-  port: PORT,
+  port: 9000,
   path: ENDPOINT,
 });
 
