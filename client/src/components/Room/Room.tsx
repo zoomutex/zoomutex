@@ -101,7 +101,7 @@ const Room = (): JSX.Element => {
     <div>
       <div className="room-title">Room {match.params.roomId}</div>
       <div className="video-grid">
-        <Video mediaStream={userMediaStream} />
+        <Video mediaStream={userMediaStream} isCamera={true} />
         <VideoList streams={streams} />
       </div>
     </div>
