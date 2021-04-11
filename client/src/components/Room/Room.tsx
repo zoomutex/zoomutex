@@ -1,12 +1,12 @@
 import "./styles.css";
 
 import { PeerContext, SocketContext } from "../../context";
-import VideoList, { Streams } from "./VideoList";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
-import { MediaConnection } from "peerjs";
 import Video from "./Video";
+import VideoList from "./VideoList";
 import { roomRoute } from "./route";
+import { useCallPeer } from "./useCallPeer";
 import { useRouteMatch } from "react-router";
 import useUserMedia from "./useUserMedia";
 
@@ -20,54 +20,13 @@ interface UserConnectedArgs {
 
 const Room = (): JSX.Element => {
   const match = useRouteMatch<RoomPathArgs>(roomRoute);
+  const [roomId] = useState<string | undefined>(match?.params.roomId);
 
   const socket = useContext(SocketContext);
-  const peer = useContext(PeerContext);
-
-  const [roomId] = useState<string | undefined>(match?.params.roomId);
-  const userId = peer.id
+  const peerjs = useContext(PeerContext);
 
   const userMediaStream = useUserMedia({ audio: true, video: true });
-  const [streams, setStreams] = useState<Streams>({});
-
-  const addCallToRoom = useCallback(
-    (call: MediaConnection) => {
-      console.log("handle call");
-
-      call.on("stream", (stream) => {
-        console.log(`adding stream for ${userId}`);
-        setStreams({
-          ...streams,
-          [userId]: stream,
-        });
-      });
-
-      call.on("close", () => {
-        console.log(`closing call for ${userId}`);
-
-        const updatedStreams = { ...streams };
-        delete updatedStreams[userId];
-        setStreams(updatedStreams);
-      });
-
-      console.log(`user connected: ${userId}`);
-    },
-    [streams, userId]
-  );
-
-  const callPeer = useCallback(
-    (userId: string) => {
-      console.log("call joining group");
-      if (!userMediaStream) {
-        return;
-      }
-
-      // Call the user who just joined
-      const call = peer.call(userId, userMediaStream);
-      addCallToRoom(call);
-    },
-    [addCallToRoom, peer, userMediaStream]
-  );
+  const [callPeer, streams] = useCallPeer(peerjs, userMediaStream);
 
   const deferredUserIds = useRef<string[]>([]);
 
@@ -81,49 +40,30 @@ const Room = (): JSX.Element => {
     deferredUserIds.current = [];
   }, [callPeer]);
 
-  // When we first open the app, join a room
-  const onPeerOpen = useCallback(
-    (userId: string): void => {
-      if (!roomId) {
-        return;
-      }
-
-      socket.emit("join-room", { roomId, userId });
-    },
-    [roomId, socket]
-  );
-
+  /**
+   * Event handler for when a new user connects to the room.
+   */
   const onUserConnected = useCallback(
-    ({ userId: connectedUserId }: UserConnectedArgs): void => {
+    ({ userId }: UserConnectedArgs): void => {
       console.log("user attempting to connect");
 
-      if (!connectedUserId) {
+      // Ignore undefined users
+      if (!userId) {
+        console.error("user was invalid");
         return;
       }
 
+      // If our media stream isn't running yet, defer connecting to the new user
       if (!userMediaStream) {
-        deferredUserIds.current.push(connectedUserId);
-        console.log(
-          `deferred userId ${connectedUserId} while waiting for connection`
-        );
+        deferredUserIds.current.push(userId);
+        console.log(`deferred userId ${userId} while waiting for media stream`);
         return;
       }
 
-      callPeer(connectedUserId);
+      console.log("calling peer");
+      callPeer(userId);
     },
     [callPeer, userMediaStream]
-  );
-
-  const answerCall = useCallback(
-    (call: MediaConnection) => {
-      if (userMediaStream) {
-        console.log("answering call");
-        call.answer(userMediaStream);
-      } else {
-        console.error("could not answer call");
-      }
-    },
-    [userMediaStream]
   );
 
   useEffect(() => {
@@ -133,29 +73,25 @@ const Room = (): JSX.Element => {
     }
 
     console.log("joining room");
-    socket.emit("join-room", { roomId, userId });
+    socket.emit("join-room", { roomId, userId: peerjs.id });
     socket.on("user-connected", onUserConnected);
 
-    peer.on("open", onPeerOpen);
-    peer.on("call", answerCall);
-  }, [
-    answerCall,
-    onPeerOpen,
-    onUserConnected,
-    peer,
-    roomId,
-    socket,
-    userId,
-    userMediaStream,
-  ]);
+    peerjs.on("open", (userId) => {
+      socket.emit("join-room", { roomId, userId });
+    });
+
+    peerjs.on("call", (call) => {
+      call.answer(userMediaStream);
+    });
+  }, [onUserConnected, peerjs, roomId, socket, userMediaStream]);
 
   useEffect(() => {
     window.onbeforeunload = () => {
       console.log("cleaning up");
       socket.disconnect();
-      peer.destroy();
+      peerjs.destroy();
     };
-  }, [peer, socket]);
+  }, [peerjs, socket]);
 
   if (match === null || !match.params.roomId) {
     return <div>Invalid room</div>;
