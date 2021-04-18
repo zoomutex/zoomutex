@@ -1,15 +1,9 @@
 import { ExpressPeerServer } from "peer";
 import { Server } from "http";
 
-//Generate a random id for a client that connects
-const customGenerationFunction = () =>
-  (Math.random().toString(36) + "0000000000000000000").substr(2, 16);
-
 const startPeerServer = (server: Server) => {
   // Start peerServer and return id to connecting clients
-  const peerServer = ExpressPeerServer(server, {
-    generateClientId: customGenerationFunction,
-  });
+  const peerServer = ExpressPeerServer(server);
 
   console.log(`Peer server listening`);
 
@@ -23,7 +17,7 @@ const startPeerServer = (server: Server) => {
   });
 
   peerServer.on("message", (client, message) => {
-    if (message.type == "HEARTBEAT") {
+    if (message.type === "HEARTBEAT") {
       // console.log("Received heartbeat message from : " + client.getId())
       return;
     }
@@ -33,7 +27,7 @@ const startPeerServer = (server: Server) => {
     );
   });
 
-  return peerServer
+  return peerServer;
 };
 
 export default startPeerServer;
