@@ -1,7 +1,6 @@
-import http from "http";
-import WebSocket from "ws";
+import WebSocket, {Server} from "ws";
 import { v4 as uuidv4 } from "uuid";
-import { ErrorMessage, JoinRoomMessage, Message, MessageType } from "./types";
+import { ErrorMessage, JoinRoomMessage, Message } from "./types";
 
 interface SocketData {
   userId: string;
@@ -9,16 +8,17 @@ interface SocketData {
 }
 
 export default class WebSocketServer {
-  private readonly server: WebSocket.Server;
+  public readonly server: Server;
   private readonly rooms: Map<string, Set<WebSocket>> = new Map();
   private readonly roomWeakMap: WeakMap<WebSocket, SocketData> = new WeakMap();
 
-  public constructor(httpServer: http.Server) {
-    this.server = new WebSocket.Server({ server: httpServer, path: "/socket" });
+  public constructor() {
+    this.server = new Server({ noServer: true, path: "/socket" });
     this.server.on("connection", this.onConnection);
     this.server.on("close", this.onDisconnected);
     this.server.on("error", this.onError);
   }
+
   private onConnection = (ws: WebSocket): void => {
     console.log("new ws connection");
     ws.on("message", this.onMessage(ws));

@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^8.2.0",
-    "peer": "^0.6.1",
+    "peer": "zoomutex/peerjs-server#multiple-ws",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
