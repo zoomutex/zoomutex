@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=production node server.js",
-    "dev:server": "ts-node-dev --respawn --pretty --transpile-only src/server.ts",
+    "dev:server": "tsc src/client/scripts/auth.ts && ts-node-dev --respawn --pretty --transpile-only src/server.ts",
     "dev:client": "find src/client/scripts -name '*.js' -type f -delete && tsc src/client/scripts/* --watch --target es2016"
   },
   "keywords": [],

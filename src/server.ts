@@ -17,6 +17,10 @@ const httpServer = http.createServer(app);
 app.use(express.static(path.join(__dirname, "client")));
 
 app.get("/", async (req, res) => {
+  return res.sendFile(path.join(__dirname, "client", "auth.html"));
+});
+
+app.get("/join", async (req, res) => {
   return res.sendFile(path.join(__dirname, "client", "join.html"));
 });
 

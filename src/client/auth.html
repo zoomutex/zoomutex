@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Authentication Form</title>
+</head>
+
+<body>
+    <div class="container" id="container">
+        <div class="form-container log-in-container">
+            <form action="#">
+                <h1>Login</h1>
+                <input id="loginUsername" type="username" placeholder="Username" />
+                <input id="loginPassword" type="password" placeholder="Password" />
+                <button onclick="return logIn()">Log In</button>
+            </form>
+        </div>
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-right">
+                    <form id="signUpForm">
+                        <h1>Create Account</h1>
+                        <input id="signupUsername" type="username" placeholder="Username" value="" />
+                        <input id="signupEmail" type="email" placeholder="Email" value="" />
+                        <input id="signupPassword" type="password" placeholder="Password" value="" />
+                        <button id="signUpButton" onclick="return signUp()">Signup</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h3 id="ActionStatus"></h3>
+</body>
+<script src="scripts/auth.js"></script>
+<script>
+    // Zoomutex server url
+    const zoomMutexJoin = "http://127.0.0.1:7000/join"
+    const serverRspStatus = document.getElementById("ActionStatus");
+
+    async function logIn() {
+        const username =
+            document.getElementById("loginUsername").value;
+        const password =
+            document.getElementById("loginPassword").value;
+        const result = await loginUser({
+            username: username,
+            password: password
+        })
+        if (result) {
+            location.href = zoomMutexJoin // forward to Zoomutex
+            return false // return false -> submits form 
+        } else {
+            serverRspStatus.innerHTML = "Error logging in"
+            return true // reload form
+        }
+    }
+    function signUp() {
+        const username =
+            document.getElementById("signupUsername").value;
+        const email =
+            document.getElementById("signupEmail").value;
+        const password =
+            document.getElementById("signupPassword").value;
+        if (!username || !email || !password) {
+            serverRspStatus.innerHTML = "Invalid details"
+            return false
+        }
+        if (signUpUser({
+            username: username,
+            email: email,
+            password: password
+        })) {
+            serverRspStatus.innerHTML = "Signed up successfully"
+            return false
+        } else {
+            serverRspStatus.innerHTML = "Error signing up"
+            return false
+        }
+    }
+</script>
+
+</html>
