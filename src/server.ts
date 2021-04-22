@@ -21,7 +21,28 @@ app.get("/", async (req, res) => {
 });
 
 app.get("/join", async (req, res) => {
-  return res.sendFile(path.join(__dirname, "client", "join.html"));
+    const token = req.query.token;
+    if (!token) {
+      return res.redirect("/");
+    }
+    return res.sendFile(path.join(__dirname, "client", "join.html"));
+    /*
+    const jwtSecretKey = Buffer.from('jwt_secret_key', 'utf-8').toString('base64')
+    console.log(`token is :{${token}}`)
+
+    try {
+      const verified = jwt.verify(token?.toString(), jwtSecretKey);
+      if(verified){
+          return res.send("Successfully Verified");
+      }else{
+          console.log("Invalid ")
+          return res.status(401).send("Please login");
+      }
+    } catch (error) {
+        console.log(error)
+        return res.status(401).send(error);
+    }
+  */
 });
 
 app.get("/room/:room", async (req, res) => {

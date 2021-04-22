@@ -39,6 +39,12 @@
     const zoomMutexJoin = "http://127.0.0.1:7000/join"
     const serverRspStatus = document.getElementById("ActionStatus");
 
+    const forward = () => {
+        const jwtTokenString = document.cookie.split("=")
+        //console.log(jwtTokenString[1])
+        location.href = `${zoomMutexJoin}?token=${jwtTokenString[1]}`
+    }
+
     async function logIn() {
         const username =
             document.getElementById("loginUsername").value;
@@ -49,14 +55,16 @@
             password: password
         })
         if (result) {
-            location.href = zoomMutexJoin // forward to Zoomutex
-            return false // return false -> submits form 
+           //console.log("Status : " + result.status)
+           //console.log("jwt : " - result.jwt)
+           setTimeout(forward(), 2000)
+           return false
         } else {
             serverRspStatus.innerHTML = "Error logging in"
             return true // reload form
         }
     }
-    function signUp() {
+    async function signUp() {
         const username =
             document.getElementById("signupUsername").value;
         const email =
@@ -67,14 +75,16 @@
             serverRspStatus.innerHTML = "Invalid details"
             return false
         }
-        if (signUpUser({
+        const result = await signUpUser({
             username: username,
             email: email,
             password: password
-        })) {
+        })
+        if (result) {
             serverRspStatus.innerHTML = "Signed up successfully"
             return false
-        } else {
+        }
+        else{
             serverRspStatus.innerHTML = "Error signing up"
             return false
         }

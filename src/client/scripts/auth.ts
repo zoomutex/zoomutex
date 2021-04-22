@@ -22,7 +22,13 @@ async function signUpUser(userDetails: any) : Promise<boolean>{
 }
 async function loginUser(userDetails: any) : Promise<boolean>{
     const x = await postJsonRequest(loginEndpoint, userDetails)
+    const json = x.json()
     if (x.status == 200){
+        json.then(function(rsp){
+            //console.log(rsp)
+            //console.log(rsp.Response.JwtToken)
+            //document.cookie = `token=${rsp.Response.JwtToken}`
+        })    
         return true
     } else {
         return false
