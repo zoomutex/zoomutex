@@ -5,7 +5,7 @@
 }
 
 body {
-	background: #f3e0e2;
+	background: #1E2333;
 	display: flex;
 	color: #FF4B2B;
 	justify-content: center;
@@ -47,14 +47,14 @@ button {
 	color: #FFFFFF;
 	font-size: 12px;
 	font-weight: bold;
-	padding: 12px 45px;
+	padding: 12px 55px;
 	letter-spacing: 1px;
 	text-transform: uppercase;
 	transition: transform 80ms ease-in;
 }
 
 form {
-	background-color: #FFFFFF;
+	background-color: #EDEDF4;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -153,8 +153,8 @@ input {
 	width: 40px;
 }
 
-.headerSignup{
-    color: #f54d4d;   
+#headerSignup{
+    color: #1a083a;   
 }
 #signUpForm {
     background: #f54d4d;
@@ -163,11 +163,11 @@ input {
 }
 #signUpButton {
     background-color: #FFFFFF;
-	color: #f54d4d;
+	color: #1a083a;
 }
 #ActionStatus{
-	color: rgb(100, 90, 90);
+	color: rgb(214, 200, 200);
 }
 #createdRoomId{
-	color: rgb(100, 90, 90);
+	color: #1a083a
 }
