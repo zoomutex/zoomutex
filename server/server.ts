@@ -3,13 +3,13 @@ import * as dotenv from "dotenv";
 import PeerWrapper from "./peerWrapper";
 import Rooms from "./rooms";
 import express from "express";
-import { getPort } from "./utils";
+import { getEnvOrDefaultPort } from "./utils";
 import http from "http";
 import path from "path";
 
 dotenv.config();
 
-const PORT = getPort();
+const PORT = getEnvOrDefaultPort();
 const CLIENT_PATH = path.join(__dirname, "../client");
 
 const app = express();

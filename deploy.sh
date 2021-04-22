@@ -1,24 +1,7 @@
 #!/bin/bash
 
-# Remove prior builds
-rm -rf build
-mkdir build
-
-# Build server
-cd server
-npm run local-build
-cd ..
-
-# Build client
-cd client
+# Build server and client
 npm run build
-cd ..
-
-# Move files to build
-cp -r server/build .
-cp server/package.json ./build/package.json
-
-cp -r client/build build/client
 
 # Clean heroku folder
 dirname=$(pwd)
@@ -27,11 +10,8 @@ git checkout deployment-test
 rm -rf */
 rm *
 
-# Copy build
-cd $dirname
-echo $dirname
-pwd
-cp -r build/. $1
-cd $1
+# Copy all build files, except node_modules, .git, and .vscode
+rsync -av $dirname/ $1 --exclude node_modules --exclude .git --exclude .vscode
 git add .
 git commit -m "$2"
+git push

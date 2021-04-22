@@ -15,6 +15,7 @@ node_modules/
 # production
 build/
 *.js
+*.js.map
 
 # misc
 .DS_Store
