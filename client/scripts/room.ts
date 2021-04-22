@@ -23,11 +23,22 @@ class Room {
   private readonly roomId: string;
 
   private readonly userStream: MediaStream;
-  private peer: Peer | null = null;
+  private readonly peer: Peer | null = null;
+  private readonly videosRef: HTMLVideoElement;
+  private readonly userStreams = new Set<string>();
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
     this.userStream = userStream;
+
+    const videosRef = document.getElementById("videos");
+    if (videosRef === null) {
+      throw new Error("videos element was unexpectedly null");
+    }
+    this.videosRef = videosRef as HTMLVideoElement;
+
+    this.addVideo(userStream, true);
+
     // @ts-ignore
     this.peer = new Peer({
       host: window.location.hostname,
@@ -80,15 +91,37 @@ class Room {
   };
 
   private onCallStream = (peerId: string) => (stream: MediaStream): void => {
+    if (this.userStreams.has(peerId)) {
+      console.log(`ignored superfluous stream from ${peerId}`);
+      return;
+    }
+
     console.log(`received stream from ${peerId}`);
+    this.userStreams.add(peerId);
+    this.addVideo(stream);
   };
 
   private onCallClose = (peerId: string) => (): void => {
     console.error(`peerId ${peerId} has disconnected from the call`);
+    // TODO: clean up
   };
 
   private onCallError = (peerId: string) => (err: any): void => {
     console.error(`peerId ${peerId} has had an error: ${err}`);
+    // TODO: clean up
+  };
+
+  private addVideo = (stream: MediaStream, isUser: boolean = false): void => {
+    const videoEl = document.createElement("video");
+    if (isUser) {
+      videoEl.id = "user";
+    }
+
+    videoEl.srcObject = stream;
+    videoEl.autoplay = true;
+    videoEl.playsInline = true;
+
+    this.videosRef.appendChild(videoEl);
   };
 
   // TODO: cleanup media streams
