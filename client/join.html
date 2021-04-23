@@ -1,15 +1,66 @@
-<!DOCTYPE html lang="en">
+<!DOCTYPE html>
 <html>
 
-    <head>
-        <meta charset="utf-8">
-        <title>ZooMutex</title>
-    </head>
+<head>
+    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>ZooMutex Create/Join</title>
+</head>
 
-    <body>
-        <script src="scripts/join.js" type="module"></script>
-
-        <h1>Hello join!</h1>
-    </body>
-
+<body>
+    <script src="scripts/join.js" type="module"></script>
+    <div class="container" id="container">
+        <div class="form-container log-in-container">
+            <form id=>
+                <h1>Create a group video call</h1>
+                <br>
+                <h4 id="createdRoomId"></h4>
+                
+                <button onclick="return create()">Create</button>
+            </form>
+        </div>
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-right">
+                    <form id="signUpForm">
+                        <h1 id="headerSignup">Join a group video call</h1>
+                        <br>
+                        <input id="joinRoomId" placeholder="Room id..." value="" />
+                        <br>
+                        <button id="signUpButton" onclick="return join()">Join</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 </html>
+<script>
+    const zoomMutexCreate = "http://127.0.0.1:7000/"
+    const createdRoomId = document.getElementById("createdRoomId");
+    const customGenerationFunction = () => (Math.random().toString(36) + '0000000000000000000').substr(2, 8);
+
+
+    function forward (joinRoomId) {
+        location.href = `${zoomMutexCreate}${joinRoomId}`
+    }
+    function create() {
+        const RoomId = customGenerationFunction()
+
+        //Do we want to forward to /:roomId or make user enter the roomId in the join form
+
+        //setTimeout(() => {
+        //    location.href = `${zoomMutexCreate}${RoomId}`
+        //}, 3000) 
+
+        const joinRoomId = document.getElementById("joinRoomId")
+        joinRoomId.value = RoomId
+        createdRoomId.innerHTML = `Creating room : ${RoomId}<h4><h4>Join -----></h4>`
+        return false //to prevent form reload
+    }
+    function join() {
+        const joinRoomId = document.getElementById("joinRoomId").value;
+        setTimeout(forward(joinRoomId), 3000)
+        return false //to prevent form reload
+    }
+</script>
