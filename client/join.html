@@ -41,11 +41,8 @@
     const createdRoomId = document.getElementById("createdRoomId");
     const customGenerationFunction = () => (Math.random().toString(36) + '0000000000000000000').substr(2, 8);
 
-    const jwtTokenString = new URL(window.location.href).search.split("=")[1]
-
     function forward (joinRoomId) {
-        console.log(`${zoomMutexCreate}${joinRoomId}?token=${jwtTokenString}`)
-        location.href = `${zoomMutexCreate}${joinRoomId}?token=${jwtTokenString}`
+        location.href = `${zoomMutexCreate}${joinRoomId}`
     }
     function create() {
         const RoomId = customGenerationFunction()

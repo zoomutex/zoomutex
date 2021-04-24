@@ -49,10 +49,6 @@ app.post("/:room/users", (req, res) => {
 });
 
 app.get("/:room/", async (_req, res) => {
-  const token = _req.query.token;
-  if (!token) {
-    return res.redirect("/");
-  }
   return res.sendFile(path.join(CLIENT_PATH, "room.html"));
 });
 
