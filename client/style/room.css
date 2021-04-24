@@ -20,6 +20,7 @@ body {
 }
 
 #videos {
-    position: relative;
-    margin: 2% 2%;
+    position: absolute;
+    margin: 2%;
+    height: 80%;
 }
