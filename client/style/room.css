@@ -1,7 +1,25 @@
 #user {
-    border: 2px solid red;
+    border: 2px solid #050427;
 }
 
-h1 {
-    font-family: 'Courier New', Courier, monospace;
+#shareUrl {
+	font-family: 'Montserrat', sans-serif;
+    display: block;
+    position: relative;
+    color: #ce4c35;
+    text-align: center;
+}
+
+body {
+    position: relative;
+    background: #1E2333;
+    display: grid;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+}
+
+#videos {
+    position: relative;
+    margin: 2% 2%;
 }
