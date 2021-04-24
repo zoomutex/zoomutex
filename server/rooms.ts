@@ -21,17 +21,30 @@ export default class Rooms {
 
   private constructor() {}
 
-  public getRoomPeers = (key: string, peerId: string): string[] => {
-    let peers = this.rooms.get(key);
-    this.users.set(peerId, key);
+  /**
+   * Gets the peers of the current room. If the current room does not exist
+   * then the room is created.
+   *
+   * @param roomId
+   * @param peerId
+   * @returns
+   */
+  public getRoomPeers = (roomId: string, peerId: string): ReadonlyArray<string> => {
+    let peers = this.rooms.get(roomId);
+    this.users.set(peerId, roomId);
 
     if (peers === undefined) {
       peers = new Set();
-      this.rooms.set(key, peers);
+      this.rooms.set(roomId, peers);
     }
 
-    const data = Array.from(peers);
+    // Get all the peers
+    const data: ReadonlyArray<string>  = Array.from(peers);
+
+    // Add yourself to the room.
     peers.add(peerId);
+
+    // `data` does not contain yourself - it contains all the existing peers.
     return data;
   };
 
