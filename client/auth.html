@@ -82,8 +82,10 @@
             password: password
         })
         if (result) {
-            serverRspStatus.innerHTML = "Signed up successfully"
-            return true
+            setTimeout(()=>{
+                serverRspStatus.innerHTML = "Signed up successfully"
+            },3500)
+            return false
         }
         else{
             serverRspStatus.innerHTML = "Error signing up"
