@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=production node server/server.js",
-    "dev:server": "tsc client/scripts/auth.ts && ts-node-dev --respawn --pretty --project server/tsconfig.json server/server.ts",
+    "dev:server": "ts-node-dev --respawn --pretty --project server/tsconfig.json server/server.ts",
     "dev:client": "tsc --project client/tsconfig.json --watch",
     "build": "tsc --project client/tsconfig.json && tsc --project server/tsconfig.json"
   },
