@@ -48,7 +48,11 @@ app.post("/:room/users", (req, res) => {
   return res.json(rooms.getRoomPeers(roomId, userId));
 });
 
-app.get("/:room", async (_req, res) => {
+app.get("/:room/", async (_req, res) => {
+  const token = _req.query.token;
+  if (!token) {
+    return res.redirect("/");
+  }
   return res.sendFile(path.join(CLIENT_PATH, "room.html"));
 });
 
