@@ -9,6 +9,32 @@ Set up server env:
 PORT=7000
 ```
 
+Start running the server:
+
+```shell
+npm run dev:server
+```
+
+Start compiling the client in watch mode:
+
+```shell
+npm run dev:client
+```
+
+## Building
+
+Build the application:
+
+```shell
+npm run build
+```
+
+Run the application in production:
+
+```shell
+npm run start
+```
+
 ## Deploy
 
 To deploy, run `deploy.sh`:

@@ -1,4 +1,4 @@
-export const getPort = (): number => {
+export const getEnvOrDefaultPort = (): number => {
   const port = parseInt(process.env.PORT!);
 
   if (!!port && !isNaN(port)) {

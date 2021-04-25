@@ -14,8 +14,8 @@ node_modules/
 
 # production
 build/
-client/build
-server/build
+*.js
+*.js.map
 
 # misc
 .DS_Store
