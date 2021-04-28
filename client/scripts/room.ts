@@ -27,8 +27,9 @@ function getRoomId(): string {
 }
 
 class Room {
-  private readonly roomId: string;
+  private static instance: Room | null = null;
 
+  private readonly roomId: string;
   private readonly userStream: MediaStream;
   private readonly peer: Peer | null = null;
   private readonly videosRef: HTMLVideoElement;
@@ -136,7 +137,7 @@ class Room {
 
     console.log(`received stream from ${peerId}`);
     this.userStreams.add(peerId);
-    this.addMediaStreamToDOM(stream);
+    this.addMediaStreamToDOM(stream, peerId);
   };
 
   /**
@@ -264,9 +265,15 @@ class Room {
    */
   public static init = async (): Promise<Room> => {
     const roomId = getRoomId();
-    const userStream = await getUserMediaStream();
-    return new Room(roomId, userStream);
+    if (Room.instance === null) {
+      const userStream = await getUserMediaStream();
+      Room.instance = new Room(roomId, userStream);
+    }
+    return Room.instance;
   };
 }
 
-Room.init();
+Room.init().then(room => {
+  // @ts-ignore
+  window.zoomutexRoom = room
+});
