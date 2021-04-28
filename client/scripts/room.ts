@@ -1,4 +1,5 @@
 import type Peer from "peerjs";
+import type hark from "hark";
 
 const getUserMediaStream = async () =>
   await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
@@ -31,7 +32,8 @@ class Room {
 
   private readonly roomId: string;
   private readonly userStream: MediaStream;
-  private readonly audioTracks: MediaStreamTrack[];
+  private readonly audioTrack: MediaStreamTrack;
+  private readonly speechEvents: hark.Harker;
   private readonly peer: Peer | null = null;
   private readonly videosRef: HTMLVideoElement;
   private readonly userStreams = new Set<string>();
@@ -41,7 +43,17 @@ class Room {
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
     this.userStream = userStream;
-    this.audioTracks = userStream.getAudioTracks();
+
+    const tracks = userStream.getAudioTracks();
+    if (tracks.length < 0) {
+      throw new Error("Could not acquire audio track");
+    }
+    this.audioTrack = tracks[0];
+
+    // @ts-ignore
+    this.speechEvents = hark(this.userStream, {});
+    this.speechEvents.on("speaking", this.onSpeaking);
+    this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
     // Get the reference to `#videos`
     const videosRef = document.getElementById("videos");
@@ -249,14 +261,22 @@ class Room {
     this.videosRef.appendChild(videoEl);
   };
 
+  private onSpeaking = (): void => {
+    console.log("speaking");
+  };
+
+  private onStoppedSpeaking = (): void => {
+    console.log("stopped speaking");
+  };
+
   /**
    * Mutes or unmutes the audio tracks for the user's media stream.
    * @param isMuted
    */
   public toggleMuted = (isMuted?: boolean): void => {
-    for(const track of this.audioTracks) {
-      track.enabled = !(isMuted !== undefined ? isMuted : !track.enabled);
-    }
+    this.audioTrack.enabled = !(isMuted !== undefined
+      ? isMuted
+      : !this.audioTrack.enabled);
   };
 
   /**
