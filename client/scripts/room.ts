@@ -33,6 +33,7 @@ class Room {
   private readonly peer: Peer | null = null;
   private readonly videosRef: HTMLVideoElement;
   private readonly userStreams = new Set<string>();
+  private readonly domVideos = new Map<string, HTMLVideoElement>();
   private readonly dataConnections = new Map<string, Peer.DataConnection>();
 
   private constructor(roomId: string, userStream: MediaStream) {
@@ -47,7 +48,7 @@ class Room {
     this.videosRef = videosRef as HTMLVideoElement;
 
     // Add the user's own media stream to the DOM
-    this.addMediaStreamToDOM(userStream, true);
+    this.addMediaStreamToDOM(userStream);
 
     // The following ts-ignore is necessary because we are importing from a CDN,
     // not from npm.
@@ -224,22 +225,36 @@ class Room {
    * Adds the media stream to the DOM as a video element.
    *
    * @param stream The media stream to include for the video.
-   * @param isUser `true` when the media stream is for the user's own camera.
+   * @param peerId The id of the peer whose media stream this is.
    */
   private addMediaStreamToDOM = (
     stream: MediaStream,
-    isUser: boolean = false
+    peerId?: string
   ): void => {
     const videoEl = document.createElement("video");
-    if (isUser) {
+    if (peerId === undefined) {
+      // it's the user
       videoEl.id = "user";
+      videoEl.muted = true;
     }
 
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
 
+    this.domVideos.set("user", videoEl);
     this.videosRef.appendChild(videoEl);
+  };
+
+  public toggleMuted = (peerId: string, value?: boolean): void => {
+    const videoEl = this.domVideos.get(peerId);
+
+    if (videoEl === undefined) {
+      console.error(`the ${peerId} dom element was not stored`);
+      return;
+    }
+
+    videoEl.muted = value !== undefined ? value : !videoEl.muted;
   };
 
   /**
