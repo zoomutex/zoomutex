@@ -31,6 +31,7 @@ class Room {
 
   private readonly roomId: string;
   private readonly userStream: MediaStream;
+  private readonly audioTracks: MediaStreamTrack[];
   private readonly peer: Peer | null = null;
   private readonly videosRef: HTMLVideoElement;
   private readonly userStreams = new Set<string>();
@@ -40,6 +41,7 @@ class Room {
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
     this.userStream = userStream;
+    this.audioTracks = userStream.getAudioTracks();
 
     // Get the reference to `#videos`
     const videosRef = document.getElementById("videos");
@@ -247,15 +249,14 @@ class Room {
     this.videosRef.appendChild(videoEl);
   };
 
-  public toggleMuted = (peerId: string, value?: boolean): void => {
-    const videoEl = this.domVideos.get(peerId);
-
-    if (videoEl === undefined) {
-      console.error(`the ${peerId} dom element was not stored`);
-      return;
+  /**
+   * Mutes or unmutes the audio tracks for the user's media stream.
+   * @param isMuted
+   */
+  public toggleMuted = (isMuted?: boolean): void => {
+    for(const track of this.audioTracks) {
+      track.enabled = !(isMuted !== undefined ? isMuted : !track.enabled);
     }
-
-    videoEl.muted = value !== undefined ? value : !videoEl.muted;
   };
 
   /**
@@ -273,7 +274,7 @@ class Room {
   };
 }
 
-Room.init().then(room => {
+Room.init().then((room) => {
   // @ts-ignore
-  window.zoomutexRoom = room
+  window.zoomutexRoom = room;
 });
