@@ -1,31 +1,6 @@
 import type Peer from "peerjs";
 import type hark from "hark";
-
-const getUserMediaStream = async () =>
-  await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-
-/**
- * Redirect to the application root.
- */
-function redirect(): void {
-  window.location.replace("/");
-}
-
-/**
- * Get the room id from the URL.
- * @returns The room ID.
- */
-function getRoomId(): string {
-  const path = window.location.pathname.split("/");
-  const room = path[1];
-
-  if (room === undefined || room === "") {
-    redirect();
-    throw new Error("Undefined room - redirecting now");
-  }
-
-  return room;
-}
+import { getRoomId, getUserMediaStream } from "./utils.js";
 
 class Room {
   private static instance: Room | null = null;
@@ -50,6 +25,8 @@ class Room {
     }
     this.audioTrack = tracks[0];
 
+    // The following ts-ignore is necessary because we are importing from a CDN,
+    // not from npm.
     // @ts-ignore
     this.speechEvents = hark(this.userStream, {});
     this.speechEvents.on("speaking", this.onSpeaking);
