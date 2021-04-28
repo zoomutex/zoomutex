@@ -33,6 +33,7 @@ class Room {
   private readonly peer: Peer | null = null;
   private readonly videosRef: HTMLVideoElement;
   private readonly userStreams = new Set<string>();
+  private readonly dataConnections = new Map<string, Peer.DataConnection>();
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
@@ -58,6 +59,7 @@ class Room {
     });
     this.peer.on("open", this.onPeerOpen);
     this.peer.on("call", this.onPeerCall);
+    this.peer.on("connection", this.onPeerDataConnection);
     this.peer.on("disconnected", this.onPeerDisconnected);
   }
 
@@ -80,6 +82,7 @@ class Room {
     });
 
     const data = await res.json();
+    this.connectToDataPeers(data);
     this.callPeers(data);
   };
 
@@ -141,7 +144,7 @@ class Room {
    * This function is constructed in this way so we can log the `peerId`.
    */
   private onCallClose = (peerId: string) => (): void => {
-    console.error(`peerId ${peerId} has disconnected from the call`);
+    console.error(`call ${peerId} has disconnected from the call`);
     // TODO: clean up
   };
 
@@ -151,8 +154,70 @@ class Room {
    * This function is constructed in this way so we can log the `peerId`.
    */
   private onCallError = (peerId: string) => (err: any): void => {
-    console.error(`peerId ${peerId} has had an error: ${err}`);
+    console.error(`call ${peerId} has had an error: ${err}`);
     // TODO: clean up
+  };
+
+  private onPeerDataConnection = (conn: Peer.DataConnection): void => {
+    const peerId = conn.peer;
+    console.log(`received data connection from ${peerId}`);
+    this.dataConnections.set(peerId, conn);
+
+    // When we receive a data connection, we need to register the event handlers.
+    conn.on("open", this.onPeerDataOpen(peerId, conn));
+    conn.on("data", this.onPeerDataReceive(peerId));
+    conn.on("error", this.onPeerDataError(peerId));
+    conn.on("close", this.onPeerDataClose(peerId));
+  };
+
+  private connectToDataPeers = (peers: string[]): void => {
+    if (this.peer === null) {
+      throw new Error("peer was unexpectedly null");
+    }
+
+    for (const peerId of peers) {
+      // Connect to the peer
+      const conn = this.peer.connect(peerId);
+      console.log(`connected to ${peerId}`);
+
+      // Register the event handlers for the peer data connection
+      conn.on("open", this.onPeerDataOpen(peerId, conn));
+      conn.on("error", this.onPeerDataError(peerId));
+      conn.on("close", this.onPeerDataClose(peerId));
+      conn.on("data", this.onPeerDataReceive(peerId));
+    }
+  };
+
+  private onPeerDataReceive = (peerId: string) => (data: any): void => {
+    console.log(`received data '${data}' from ${peerId}`);
+  };
+
+  private onPeerDataOpen = (
+    peerId: string,
+    conn: Peer.DataConnection
+  ) => (): void => {
+    this.dataConnections.set(peerId, conn);
+    this.sendPeerData(peerId, "hello world!");
+  };
+
+  private onPeerDataError = (peerId: string) => (err: any): void => {
+    console.error(`data ${peerId} has had an error: ${err}`);
+    // TODO: clean up
+  };
+
+  private onPeerDataClose = (peerId: string) => (): void => {
+    console.warn(`data ${peerId} has closed`);
+    // TODO: clean up
+  };
+
+  private sendPeerData = (peerId: string, data: any): void => {
+    if (!this.dataConnections.has(peerId)) {
+      console.error(`data ${peerId} does not have a data connection`);
+      return;
+    }
+
+    const conn = this.dataConnections.get(peerId)!;
+    conn.send(data);
   };
 
   /**
