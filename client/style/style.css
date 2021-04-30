@@ -21,25 +21,6 @@ h1 {
 	margin: 0;
 }
 
-p {
-	font-size: 14px;
-	font-weight: 100;
-	line-height: 20px;
-	letter-spacing: 0.5px;
-	margin: 20px 0 30px;
-}
-
-span {
-	font-size: 12px;
-}
-
-a {
-	color: #333;
-	font-size: 14px;
-	text-decoration: none;
-	margin: 15px 0;
-}
-
 button {
 	border-radius: 20px;
 	border: 1px solid #FF4B2B;
@@ -104,9 +85,13 @@ input {
 	height: 100%;
 }
 
-
+#signUpForm {
+    background: #e4583f;
+	background: -webkit-linear-gradient(to right, #FF4B2B, #f54d4d);
+	background: linear-gradient(to right, #FF4B2B, #f54d4d);	
+}
 .overlay {
-	background: #f54d4d;
+	background: #e4583f;
 	background: -webkit-linear-gradient(to right, #FF4B2B, #f54d4d);
 	background: linear-gradient(to right, #FF4B2B, #f54d4d);
 	background-repeat: no-repeat;
@@ -136,31 +121,14 @@ input {
 .overlay-right {
 	right: 0;
 }
-
-
-.social-container {
-	margin: 50px 0;
-}
-
-.social-container a {
-	border: 1px solid #DDDDDD;
-	border-radius: 50%;
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	margin: 0 5px;
-	height: 40px;
-	width: 40px;
+#title{
+	font-size: 50px;
 }
 
 #headerSignup{
     color: #1a083a;   
 }
-#signUpForm {
-    background: #f54d4d;
-	background: -webkit-linear-gradient(to right, #FF4B2B, #f54d4d);
-	background: linear-gradient(to right, #FF4B2B, #f54d4d);	
-}
+
 #signUpButton {
     background-color: #FFFFFF;
 	color: #1a083a;

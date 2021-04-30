@@ -9,6 +9,7 @@
 
 <body>
     <script src="scripts/join.js" type="module"></script>
+    <h1 id="title">ZooMutex</h1>
     <div class="container" id="container">
         <div class="form-container log-in-container">
             <form id=>
@@ -46,16 +47,9 @@
     }
     function create() {
         const RoomId = customGenerationFunction()
-
-        //Do we want to forward to /:roomId or make user enter the roomId in the join form
-
-        //setTimeout(() => {
-        //    location.href = `${zoomMutexCreate}${RoomId}`
-        //}, 3000) 
-
         const joinRoomId = document.getElementById("joinRoomId")
         joinRoomId.value = RoomId
-        createdRoomId.innerHTML = `Creating room : ${RoomId}<h4><h4>Join -----></h4>`
+        createdRoomId.innerHTML = `Creating room : ${RoomId}<h4>Click Join</h4>`
         return false //to prevent form reload
     }
     function join() {
