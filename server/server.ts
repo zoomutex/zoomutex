@@ -21,7 +21,7 @@ const peerServer = PeerWrapper.init(httpServer, rooms);
 app.use("/peerjs", peerServer.peerExpressApp);
 app.use(express.json());
 app.use(express.static(CLIENT_PATH));
-app.use(express.static(path.join(__dirname,CLIENT_PATH + "/style")))
+app.use(express.static(path.join(__dirname, CLIENT_PATH + "/style")));
 
 app.get("/", async (_req, res) => {
   return res.sendFile(path.join(CLIENT_PATH, "join.html"));

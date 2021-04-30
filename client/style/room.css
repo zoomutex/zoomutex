@@ -1,26 +1,26 @@
 #user {
-    border: 2px solid #050427;
+  border: 2px solid #050427;
 }
 
 #shareUrl {
-	font-family: 'Montserrat', sans-serif;
-    display: block;
-    position: relative;
-    color: #ce4c35;
-    text-align: center;
+  font-family: "Montserrat", sans-serif;
+  display: block;
+  position: relative;
+  color: #ce4c35;
+  text-align: center;
 }
 
 body {
-    position: relative;
-    background: #1E2333;
-    display: grid;
-	justify-content: center;
-	align-items: center;
-	flex-direction: column;
+  position: relative;
+  background: #1e2333;
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 
 #videos {
-    position: absolute;
-    margin: 2% 2%;
-    height: 80%;
+  position: absolute;
+  margin: 2% 2%;
+  height: 80%;
 }

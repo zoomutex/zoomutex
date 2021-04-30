@@ -1,49 +1,49 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-    <link rel="stylesheet" href="style/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <title>ZooMutex Create/Join</title>
-</head>
+    <head>
+        <link rel="stylesheet" href="style/style.css">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <title>ZooMutex Create/Join</title>
+    </head>
 
-<body>
-    <script src="scripts/join.js" type="module"></script>
-    <h1 id="title">ZooMutex</h1>
-    <div class="container" id="container">
-        <div class="form-container log-in-container">
-            <form id=>
-                <h1>Create a group video call</h1>
-                <br>
-                <h4 id="createdRoomId"></h4>
-                
-                <button onclick="return create()">Create</button>
-            </form>
-        </div>
-        <div class="overlay-container">
-            <div class="overlay">
-                <div class="overlay-panel overlay-right">
-                    <form id="signUpForm">
-                        <h1 id="headerSignup">Join a group video call</h1>
-                        <br>
-                        <input id="joinRoomId" placeholder="Room id..." value="" />
-                        <br>
-                        <button id="signUpButton" onclick="return join()">Join</button>
-                    </form>
+    <body>
+        <script src="scripts/join.js" type="module"></script>
+        <h1 id="title">ZooMutex</h1>
+        <div class="container" id="container">
+            <div class="form-container log-in-container">
+                <form id=>
+                    <h1>Create a group video call</h1>
+                    <br>
+                    <h4 id="createdRoomId"></h4>
+
+                    <button onclick="return create()">Create</button>
+                </form>
+            </div>
+            <div class="overlay-container">
+                <div class="overlay">
+                    <div class="overlay-panel overlay-right">
+                        <form id="signUpForm">
+                            <h1 id="headerSignup">Join a group video call</h1>
+                            <br>
+                            <input id="joinRoomId" placeholder="Room id..." value="" />
+                            <br>
+                            <button id="signUpButton" onclick="return join()">Join</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</body>
+    </body>
+
 </html>
 <script>
-    //const zoomMutexCreate = "http://127.0.0.1:7000/"
-    const zoomMutexCreate = "https://zoomutex.herokuapp.com/"
     const createdRoomId = document.getElementById("createdRoomId");
     const customGenerationFunction = () => (Math.random().toString(36) + '0000000000000000000').substr(2, 8);
 
-    function forward (joinRoomId) {
-        location.href = `${zoomMutexCreate}${joinRoomId}`
+    function forward(joinRoomId) {
+        location.href = `/${joinRoomId}`
     }
     function create() {
         const RoomId = customGenerationFunction()
