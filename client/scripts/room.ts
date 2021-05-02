@@ -233,6 +233,8 @@ class Room {
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
+    videoEl.height = 360;
+    videoEl.width = 480;
 
     this.domVideos.set("user", videoEl);
     this.videosRef.appendChild(videoEl);
