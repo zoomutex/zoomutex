@@ -7,6 +7,7 @@
     "start": "NODE_ENV=production node server/server.js",
     "dev:server": "ts-node-dev --respawn --pretty --project server/tsconfig.json server/server.ts",
     "dev:client": "tsc --project client/tsconfig.json --watch",
+    "client:sandbox" : "tsc --project client/tsconfigSandbox.json && node client/scripts/sandbox.js",
     "build": "tsc --project client/tsconfig.json && tsc --project server/tsconfig.json"
   },
   "keywords": [],
