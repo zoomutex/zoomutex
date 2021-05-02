@@ -1,42 +1,36 @@
 import type Peer from "peerjs";
-
-const getUserMediaStream = async () =>
-  await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-
-/**
- * Redirect to the application root.
- */
-function redirect(): void {
-  window.location.replace("/");
-}
-
-/**
- * Get the room id from the URL.
- * @returns The room ID.
- */
-function getRoomId(): string {
-  const path = window.location.pathname.split("/");
-  const room = path[1];
-
-  if (room === undefined || room === "") {
-    redirect();
-    throw new Error("Undefined room - redirecting now");
-  }
-
-  return room;
-}
+import type hark from "hark";
+import { getRoomId, getUserMediaStream } from "./utils.js";
 
 class Room {
-  private readonly roomId: string;
+  private static instance: Room | null = null;
 
+  private readonly roomId: string;
   private readonly userStream: MediaStream;
+  private readonly audioTrack: MediaStreamTrack;
+  private readonly speechEvents: hark.Harker;
   private readonly peer: Peer | null = null;
   private readonly videosRef: HTMLVideoElement;
   private readonly userStreams = new Set<string>();
+  private readonly domVideos = new Map<string, HTMLVideoElement>();
+  private readonly dataConnections = new Map<string, Peer.DataConnection>();
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
     this.userStream = userStream;
+
+    const tracks = userStream.getAudioTracks();
+    if (tracks.length < 0) {
+      throw new Error("Could not acquire audio track");
+    }
+    this.audioTrack = tracks[0];
+
+    // The following ts-ignore is necessary because we are importing from a CDN,
+    // not from npm.
+    // @ts-ignore
+    this.speechEvents = hark(this.userStream, {});
+    this.speechEvents.on("speaking", this.onSpeaking);
+    this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
     // Get the reference to `#videos`
     const videosRef = document.getElementById("videos");
@@ -46,7 +40,7 @@ class Room {
     this.videosRef = videosRef as HTMLVideoElement;
 
     // Add the user's own media stream to the DOM
-    this.addMediaStreamToDOM(userStream, true);
+    this.addMediaStreamToDOM(userStream);
 
     // The following ts-ignore is necessary because we are importing from a CDN,
     // not from npm.
@@ -58,6 +52,7 @@ class Room {
     });
     this.peer.on("open", this.onPeerOpen);
     this.peer.on("call", this.onPeerCall);
+    this.peer.on("connection", this.onPeerDataConnection);
     this.peer.on("disconnected", this.onPeerDisconnected);
   }
 
@@ -80,6 +75,7 @@ class Room {
     });
 
     const data = await res.json();
+    this.connectToDataPeers(data);
     this.callPeers(data);
   };
 
@@ -132,7 +128,7 @@ class Room {
 
     console.log(`received stream from ${peerId}`);
     this.userStreams.add(peerId);
-    this.addMediaStreamToDOM(stream);
+    this.addMediaStreamToDOM(stream, peerId);
   };
 
   /**
@@ -141,7 +137,7 @@ class Room {
    * This function is constructed in this way so we can log the `peerId`.
    */
   private onCallClose = (peerId: string) => (): void => {
-    console.error(`peerId ${peerId} has disconnected from the call`);
+    console.error(`call ${peerId} has disconnected from the call`);
     // TODO: clean up
   };
 
@@ -151,30 +147,113 @@ class Room {
    * This function is constructed in this way so we can log the `peerId`.
    */
   private onCallError = (peerId: string) => (err: any): void => {
-    console.error(`peerId ${peerId} has had an error: ${err}`);
+    console.error(`call ${peerId} has had an error: ${err}`);
     // TODO: clean up
+  };
+
+  private onPeerDataConnection = (conn: Peer.DataConnection): void => {
+    const peerId = conn.peer;
+    console.log(`received data connection from ${peerId}`);
+    this.dataConnections.set(peerId, conn);
+
+    // When we receive a data connection, we need to register the event handlers.
+    conn.on("open", this.onPeerDataOpen(peerId, conn));
+    conn.on("data", this.onPeerDataReceive(peerId));
+    conn.on("error", this.onPeerDataError(peerId));
+    conn.on("close", this.onPeerDataClose(peerId));
+  };
+
+  private connectToDataPeers = (peers: string[]): void => {
+    if (this.peer === null) {
+      throw new Error("peer was unexpectedly null");
+    }
+
+    for (const peerId of peers) {
+      // Connect to the peer
+      const conn = this.peer.connect(peerId);
+      console.log(`connected to ${peerId}`);
+
+      // Register the event handlers for the peer data connection
+      conn.on("open", this.onPeerDataOpen(peerId, conn));
+      conn.on("error", this.onPeerDataError(peerId));
+      conn.on("close", this.onPeerDataClose(peerId));
+      conn.on("data", this.onPeerDataReceive(peerId));
+    }
+  };
+
+  private onPeerDataReceive = (peerId: string) => (data: any): void => {
+    console.log(`received data '${data}' from ${peerId}`);
+  };
+
+  private onPeerDataOpen = (
+    peerId: string,
+    conn: Peer.DataConnection
+  ) => (): void => {
+    this.dataConnections.set(peerId, conn);
+    this.sendPeerData(peerId, "hello world!");
+  };
+
+  private onPeerDataError = (peerId: string) => (err: any): void => {
+    console.error(`data ${peerId} has had an error: ${err}`);
+    // TODO: clean up
+  };
+
+  private onPeerDataClose = (peerId: string) => (): void => {
+    console.warn(`data ${peerId} has closed`);
+    // TODO: clean up
+  };
+
+  private sendPeerData = (peerId: string, data: any): void => {
+    if (!this.dataConnections.has(peerId)) {
+      console.error(`data ${peerId} does not have a data connection`);
+      return;
+    }
+
+    const conn = this.dataConnections.get(peerId)!;
+    conn.send(data);
   };
 
   /**
    * Adds the media stream to the DOM as a video element.
    *
    * @param stream The media stream to include for the video.
-   * @param isUser `true` when the media stream is for the user's own camera.
+   * @param peerId The id of the peer whose media stream this is.
    */
   private addMediaStreamToDOM = (
     stream: MediaStream,
-    isUser: boolean = false
+    peerId?: string
   ): void => {
     const videoEl = document.createElement("video");
-    if (isUser) {
+    if (peerId === undefined) {
+      // it's the user
       videoEl.id = "user";
+      videoEl.muted = true;
     }
 
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
 
+    this.domVideos.set("user", videoEl);
     this.videosRef.appendChild(videoEl);
+  };
+
+  private onSpeaking = (): void => {
+    console.log("speaking");
+  };
+
+  private onStoppedSpeaking = (): void => {
+    console.log("stopped speaking");
+  };
+
+  /**
+   * Mutes or unmutes the audio tracks for the user's media stream.
+   * @param isMuted
+   */
+  public toggleMuted = (isMuted?: boolean): void => {
+    this.audioTrack.enabled = !(isMuted !== undefined
+      ? isMuted
+      : !this.audioTrack.enabled);
   };
 
   /**
@@ -184,9 +263,15 @@ class Room {
    */
   public static init = async (): Promise<Room> => {
     const roomId = getRoomId();
-    const userStream = await getUserMediaStream();
-    return new Room(roomId, userStream);
+    if (Room.instance === null) {
+      const userStream = await getUserMediaStream();
+      Room.instance = new Room(roomId, userStream);
+    }
+    return Room.instance;
   };
 }
 
-Room.init();
+Room.init().then((room) => {
+  // @ts-ignore
+  window.zoomutexRoom = room;
+});
