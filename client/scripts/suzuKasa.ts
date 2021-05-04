@@ -61,6 +61,8 @@ export default class MutexMagic {
     }
 
     public actionPlaceholder(){
+        console.log("")
+        console.log("Client data - ")
         this.token.actionPlaceholder()
         console.log("Request sequence number map:")
         this.requestSequenceNumbers.forEach(e => {

@@ -74,13 +74,14 @@ export default class Token {
 
 
     public actionPlaceholder() {
-        console.log("*****TOKEN*******")
+        console.log("**************TOKEN*************")
         console.log("Token queue size : " , this.tokenQ.size())
         console.log("executedSequenceNumbers map : ")
         this.executedSequenceNumbers.forEach(element => {
             console.log(element)
         });
-        console.log("*****************s")
+        console.log("*******************************")
+        console.log("")
     }
 
 }   
