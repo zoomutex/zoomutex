@@ -9,6 +9,7 @@ import Token from "./token"
 const peers = ["client4", "client2", "client3", "client1"]
 
 var suzuki = new MutexMagic(peers)
+console.log("I am client 4 and i send token request to all clients")
 suzuki.actionPlaceholder() // print this client's token object after initialisation
 
 //  we are client 4
