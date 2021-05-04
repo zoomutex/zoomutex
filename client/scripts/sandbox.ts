@@ -4,7 +4,7 @@ import Token from "./token"
 
 // using peerPlaceHolder as string for sandbox.
 // in reality, it can be the actual Peer object from Peerjs
-const peers = ["client2", "client4", "client3", "client1"]
+const peers = ["client1", "client2", "client3", "client4"]
 const me = "client4"
 const clientWithToken = "client2"
 
@@ -53,6 +53,7 @@ suzuki_Object_at_client2.printMutexObject()
 console.log("Comparing sequence numbers - ")
 // we receive request from client 4 with sequence number
 let tokenToSend = suzuki_Object_at_client2.compareSequenceNumber("client4", requestMessage?.rni)
+
 if (tokenToSend != undefined){
     // as sequence number check passed, i will send my token to client 4
     // send token to client4
