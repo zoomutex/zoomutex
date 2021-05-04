@@ -62,5 +62,37 @@ export default class MutexMagic {
 
     public actionPlaceholder(){
         this.token.actionPlaceholder()
+        console.log("Request sequence number map:")
+        this.requestSequenceNumbers.forEach(e => {
+            console.log(e)
+        })
+        console.log("")
+    }
+
+    private incrementRN(peer : peerPlaceHolder): number{
+        let rni = this.requestSequenceNumbers.get(peer)
+        if (rni !=  undefined){
+            rni = rni + 1
+            this.requestSequenceNumbers.set(peer, rni)
+            return rni
+        }
+        return -1
+    }
+
+    public accessCriticalSection(peer : peerPlaceHolder): number {
+        return this.incrementRN(peer)
+    }
+
+    public compareSequenceNumber(peer: peerPlaceHolder, sqncNum: number): Token | undefined{
+        const currentNum = this.requestSequenceNumbers.get(peer)
+        if (currentNum != undefined){
+            if (currentNum < sqncNum){
+                // send token to requesting client
+                return this.getTokenObjectToSendToPeer()
+    
+            } else{
+                // request is outdated
+            }
+        }
     }
 }
