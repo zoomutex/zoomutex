@@ -72,11 +72,22 @@ export default class Token {
         return this.tokenQ.size()
     }
 
+    public updateSequenceNumber(peer: peerPlaceHolder, sqncNum: number) :boolean {
+        let currentSequenceNumber = this.executedSequenceNumbers.get(peer)
+        if (currentSequenceNumber != undefined){
+            this.executedSequenceNumbers.set(peer, sqncNum)
+            return true
+        }
+        return false
+    }
+    public getSequenceNumber(peer: peerPlaceHolder) : number | undefined{
+        return this.executedSequenceNumbers.get(peer)
+    }
 
-    public actionPlaceholder() {
-        console.log("**************TOKEN*************")
+    public printTokenData() {
+        console.log("************** TOKEN *************")
         console.log("Token queue size : " , this.tokenQ.size())
-        console.log("executedSequenceNumbers map : ")
+        console.log("Token sequence numbers map : ")
         this.executedSequenceNumbers.forEach(element => {
             console.log(element)
         });
