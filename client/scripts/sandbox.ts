@@ -37,6 +37,11 @@ console.log("-----------------------------------------------")
 var tokenAftersomeTime = new Token(peers)
 tokenAftersomeTime.updateSequenceNumber("client2", 1)
 tokenAftersomeTime.appendToQueue("client3")
+tokenAftersomeTime.appendToQueue("client1")
+console.log(tokenAftersomeTime.lookupQueue("client1"))
+console.log(tokenAftersomeTime.lookupQueue("client3"))
+console.log("XXXXXXXXXXXXXXXXXXXX X XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X XXXXXXXXXXX")
+
 console.log("assume the token below is how it exists in the sytem after some circulation")
 tokenAftersomeTime?.printTokenData()
 
