@@ -7,6 +7,7 @@ interface ItokenQueue<T> {
     enq(siteId: T): boolean,
     deq() : T | undefined,
     size(): number
+    isElement(object: T): boolean
 }
 
 /*
@@ -33,6 +34,14 @@ class TokenQueue<T> implements ItokenQueue<T> {
     }
     size(): number{
         return this.queue.length
+    }
+    isElement(object: T): boolean{
+        for (let el in this.queue){
+            if (JSON.stringify(this.queue[el]) === JSON.stringify(object)){
+                return true
+            }
+        }
+        return false
     }
 }
 
@@ -68,6 +77,15 @@ export default class Token {
     public popFromQueue(): peerPlaceHolder | undefined {
         return this.tokenQ.deq()
     }
+
+    /**
+     * lookupQueer: looks up the token's queue and returns boolean to 
+     * indicate presence or absence
+     */
+    public lookupQueue(peer: peerPlaceHolder) : boolean{
+        return this.tokenQ.isElement(peer)
+    }
+
     public queueSize() : number{
         return this.tokenQ.size()
     }
