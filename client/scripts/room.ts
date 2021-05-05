@@ -65,6 +65,11 @@ class Room {
     this.peer.on("disconnected", this.onPeerDisconnected);
   }
 
+  public onDelay = function delay(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+}
+ 
+
   /**
    * Event handler for when peerjs has opened a connection successfully.
    * Now that peerjs has initialised, we know our peerId. Thus, we can get
@@ -269,7 +274,9 @@ class Room {
     console.log("speaking");
   };
   private onStoppedSpeaking = (): void => {
-    console.log("stopped speaking");
+    
+    setTimeout( () => console.log("stopped speaking"), 5000 );
+    //console.log("stopped speaking");
   };
 
   /**
