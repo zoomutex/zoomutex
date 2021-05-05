@@ -98,6 +98,8 @@ export default class Token {
         }
         return false
     }
+
+    
     public getSequenceNumber(peer: peerPlaceHolder) : number | undefined{
         return this.executedSequenceNumbers.get(peer)
     }

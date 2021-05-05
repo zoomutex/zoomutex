@@ -111,16 +111,33 @@ export default class MutexMagic {
         return -1
     }
 
+
+
     // this method compares the sequence number of a peer with the currently existing
     // sequence number in the local array, to filter outdated requests
     // on a valid check, it sets the local token to null and returns the actual token
     // on an invalid check, it returns undefined to indicated outdated request
     public compareSequenceNumber(peer: peerPlaceHolder, sqncNum: number): Token | undefined{
         const currentNum = this.requestSequenceNumbers.get(peer)
-        if (currentNum != undefined){
+        const localSequenceNumber = this.requestSequenceNumbers.get(peer)
+        console.log("Before condition: local request array "+localSequenceNumber);
+        const currentExecutionNum = this.token.getSequenceNumber(peer)
+        console.log(currentExecutionNum);
+        console.log(sqncNum);
+        if (currentNum != undefined && currentExecutionNum!= undefined){
             if (currentNum < sqncNum){
-                // send token to requesting client
-                return this.getTokenObjectToSendToPeer()
+                
+                //updating own local request array
+                this.requestSequenceNumbers.set(peer, sqncNum)
+                console.log("After condition: local request array "+this.requestSequenceNumbers.get(peer));
+
+                //Checking the second condition RNj[i] = LN[i] + 1
+                if(this.requestSequenceNumbers.get(peer) == currentExecutionNum+1){
+
+                    // send token to requesting client
+                    return this.getTokenObjectToSendToPeer()
+                }
+                
             } else{
                 return undefined
             }
