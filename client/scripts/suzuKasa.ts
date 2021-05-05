@@ -66,15 +66,18 @@ export default class MutexMagic {
             this.token.updateSequenceNumber(peer, localSequenceNumber)
 
             this.requestSequenceNumbers.forEach((num, peer) => {
-                // if this peer exists in the queue?? how to check this in current implementation of the queue?
-                // and, if RN[j] == LN[j] + 1
-                let outstandingSqncNum = this.token.getSequenceNumber(peer) 
-                if (outstandingSqncNum != undefined){
-                    outstandingSqncNum = outstandingSqncNum + 1
-                    if (num == outstandingSqncNum){
-                        this.token.appendToQueue(peer)
+                // if this peer does now exist in the queue
+                if (!this.token.lookupQueue(peer)){
+                    // and, if RN[j] == LN[j] + 1
+                    let outstandingSqncNum = this.token.getSequenceNumber(peer) 
+                    if (outstandingSqncNum != undefined){
+                        outstandingSqncNum = outstandingSqncNum + 1
+                        if (num == outstandingSqncNum){
+                            this.token.appendToQueue(peer)
+                        }
                     }
                 }
+               
             })
             
             // if the Queue Q is non-empty, it pops a site ID from the Q and sends 
