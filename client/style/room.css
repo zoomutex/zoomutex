@@ -14,7 +14,14 @@ body {
   position: relative;
   background: #1e2333;
 }
-
+#buttonContainer {
+  display: block;
+  position: relative;
+  text-align: center;
+}
+#speakStatus{
+  color: #ce4c35;
+}
 #videos {
   position: relative;
   column-count: 2;

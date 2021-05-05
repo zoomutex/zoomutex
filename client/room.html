@@ -16,13 +16,20 @@
         <script src="https://www.unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
         <script src="https://unpkg.com/hark@1.2.3/hark.bundle.js"></script>
 
+        <div id="buttonContainer">
+            <button id="fakeSpeech" onclick="fakeSpeechEvent()">Toggle Speech</button>
+            <p id="speakStatus"></p>
+        </div>
+
         <div id="videos"></div>
     </body>
 
 </html>
 <script>
+
     function displayRoomId() {
         const htmlRoodId = document.getElementById("roomId")
         htmlRoodId.innerHTML = window.location.href
     }
+    
 </script>
