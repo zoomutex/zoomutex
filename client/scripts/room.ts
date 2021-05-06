@@ -87,9 +87,12 @@ class Room {
    */
   private onPeerOpen = async (): Promise<void> => {
     console.log(`userId: ${this.peer?.id}`);
-    connectedPeers.push(this.peer?.id);
     const body = JSON.stringify({ userId: this.peer?.id });
 
+    // when peer opens push their userid to connectedPeers
+    const uid = JSON.parse(body);
+    const uidString = uid.userId;
+    connectedPeers.push(uidString);
     const res = await fetch(`/${this.roomId}/users`, {
       method: "POST",
       headers: {
@@ -163,13 +166,14 @@ class Room {
    */
   private onCallClose = (peerId: string) => (): void => {
     console.error(`call ${peerId} has disconnected from the call`);
-    const index = connectedPeers.indexOf(this.peer?.id);
+    const body = JSON.stringify({ userId: peerId });
+    const uid = JSON.parse(body);
+    const uidString = uid.userId;
+    const index = connectedPeers.indexOf(uidString);
     if (index > -1) {
       connectedPeers.splice(index, 1);
     }
-    
-    // array = [2, 9]
-    console.log(connectedPeers); 
+    console.log(connectedPeers);
   };
 
   /**
@@ -288,7 +292,14 @@ class Room {
   }
 
    private onSpeaking = (): void => {
+     // Get existing peers and my current id part of peers
+    const body = JSON.stringify({ userId: this.peer?.id });
+    const uid = JSON.parse(body);
+    const uidString = uid.userId;
+    var suzuki_Object_at_client4 = new MutexMagic(connectedPeers, uidString)
+    if (suzuki_Object_at_client4.doIhaveToken()){
     console.log("speaking");
+    }
   };
   private onStoppedSpeaking = (): void => {
     console.log("stopped speaking");
