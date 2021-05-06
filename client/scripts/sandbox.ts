@@ -12,6 +12,7 @@ const clientWithToken = "client2"
 // every other peer will have an empty token
 
 // this is client 4
+// call mutexmagic when needing to access cs
 var suzuki_Object_at_client4 = new MutexMagic(peers, me)
 console.log(suzuki_Object_at_client4.doIhaveToken()) // false as token would be with 1st index -> client2
 

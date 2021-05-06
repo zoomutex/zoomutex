@@ -1,6 +1,6 @@
-export const getUserMediaStream = async () =>
-  await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
 
+export const getUserMediaStream = async () =>
+  await navigator.mediaDevices.getUserMedia({ audio: true , video: false }); 
 /**
  * Redirect to the application root.
  */
