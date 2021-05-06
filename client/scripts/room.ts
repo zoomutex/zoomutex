@@ -302,8 +302,22 @@ class Room {
     const uid = JSON.parse(body);
     const uidString = uid.userId;
     var suzuki_Object_at_client4 = new MutexMagic(connectedPeers, uidString)
-    if (suzuki_Object_at_client4.doIhaveToken()){
+    if (suzuki_Object_at_client4.doIhaveToken())
+    {
     console.log("speaking");
+    }
+    else
+    {
+      const sequenceNumberToSendInMessage = suzuki_Object_at_client4.accessCriticalSection(uidString) // RNi[i]
+      let requestMessage = {
+        rni : sequenceNumberToSendInMessage}
+      console.log("")
+      console.log("I now send a token request to all clients")
+      connectedPeers.forEach( peer => {
+          //send messsage to send -> with data = requestMessage
+      console.log("Message from client has sequence number = ", requestMessage.rni)
+      })
+      console.log("-----------------------------------------------")
     }
   };
   private onStoppedSpeaking = (): void => {
