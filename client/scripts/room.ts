@@ -2,6 +2,20 @@ import type Peer from "peerjs";
 import type hark from "hark";
 import { getRoomId, getUserMediaStream } from "./utils.js";
 
+import MutexMagic from "./suzuKasa"
+import Token from "./token"
+
+
+// To do
+
+// When a peer joins add to peer list
+// when speaking and no one else in cs, set that peer to token holder
+// when someone requests add a me
+
+const connectedPeers = ["1"]
+connectedPeers.shift();
+//const me = "client4"
+//const clientWithToken = "client2"
 class Room {
   private static instance: Room | null = null;
 
@@ -73,6 +87,7 @@ class Room {
    */
   private onPeerOpen = async (): Promise<void> => {
     console.log(`userId: ${this.peer?.id}`);
+    connectedPeers.push(this.peer?.id);
     const body = JSON.stringify({ userId: this.peer?.id });
 
     const res = await fetch(`/${this.roomId}/users`, {
@@ -121,6 +136,7 @@ class Room {
    */
   private onPeerDisconnected = (): void => {
     console.log(`disconnected from server`);
+
     // TODO: clean up
   };
 
@@ -147,7 +163,13 @@ class Room {
    */
   private onCallClose = (peerId: string) => (): void => {
     console.error(`call ${peerId} has disconnected from the call`);
-    // TODO: clean up
+    const index = connectedPeers.indexOf(this.peer?.id);
+    if (index > -1) {
+      connectedPeers.splice(index, 1);
+    }
+    
+    // array = [2, 9]
+    console.log(connectedPeers); 
   };
 
   /**
