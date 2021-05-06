@@ -13,14 +13,18 @@
 body {
   position: relative;
   background: #1e2333;
-  display: grid;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
 }
-
+#buttonContainer {
+  display: block;
+  position: relative;
+  text-align: center;
+}
+#speakStatus{
+  color: #ce4c35;
+}
 #videos {
-  position: absolute;
-  margin: 2% 2%;
-  height: 80%;
+  position: relative;
+  column-count: 2;
+  text-align: center;
+  padding-bottom: 30px;
 }

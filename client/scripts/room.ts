@@ -14,6 +14,7 @@ class Room {
   private readonly userStreams = new Set<string>();
   private readonly domVideos = new Map<string, HTMLVideoElement>();
   private readonly dataConnections = new Map<string, Peer.DataConnection>();
+  private isSpeaking = false
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
@@ -32,6 +33,14 @@ class Room {
     this.speechEvents.on("speaking", this.onSpeaking);
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
+    //  button to simulate a fake speaking event
+    let fakeSpeechButton = document.getElementById("fakeSpeech");
+    if (fakeSpeechButton === null){
+      throw new Error("Button element was unexpectedly null");
+    }
+    fakeSpeechButton = fakeSpeechButton as HTMLButtonElement;
+    fakeSpeechButton.onclick = this.flipSpeaking
+    
     // Get the reference to `#videos`
     const videosRef = document.getElementById("videos");
     if (videosRef === null) {
@@ -233,15 +242,32 @@ class Room {
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
+    videoEl.height = 360;
+    videoEl.width = 480;
 
     this.domVideos.set("user", videoEl);
     this.videosRef.appendChild(videoEl);
   };
+   
+  // use button as a toggle switch to provide speaking access
+  private flipSpeaking = () : void => {
+    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+    if (fakeSpeechDisplay === null){
+      throw new Error("Fake status message element was unexpectedly null");
+    }
+    if (this.isSpeaking){
+      this.onStoppedSpeaking()
+      fakeSpeechDisplay.innerHTML = "Stopped speaking!"
+    }else{
+      this.onSpeaking()
+      fakeSpeechDisplay.innerHTML = "Now speaking..."
+    }
+    this.isSpeaking = !this.isSpeaking
+  }
 
-  private onSpeaking = (): void => {
+   private onSpeaking = (): void => {
     console.log("speaking");
   };
-
   private onStoppedSpeaking = (): void => {
     console.log("stopped speaking");
   };

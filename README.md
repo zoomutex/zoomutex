@@ -1,5 +1,11 @@
 # Zoomutex
 
+## Client Sandbox
+
+```shell
+npm run client:sandbox
+```
+
 ## Development
 
 Set up server env:
