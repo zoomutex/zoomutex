@@ -1,8 +1,10 @@
-import Token from "./token.js"
+import Token, { IToken } from "./token.js"
 
-export default class Mutex<PeerId extends string = string> {
+type PeerId = string
+
+export default class Mutex {
     
-   private token : Token<PeerId>
+   private token : Token
    private requestSequenceNumbers : Map<PeerId, number> // RN[i]
     
     constructor(peers: PeerId[], self ?: PeerId){
@@ -32,14 +34,21 @@ export default class Mutex<PeerId extends string = string> {
 
     // this method will return the current token object, which can be sent to another peer. 
     // It will also set the current token object as empty
-    public getTokenObjectToSendToPeer() : Token<PeerId> {
-        const token = this.token
+    public getTokenObjectToSendToPeer() : IToken {
+        const token = this.token.toIToken()
         this.removeToken()
         return token
     }
     // this method will set the current token object as the one received from another peer
-    public setTokenObject(token: Token<PeerId>) {
-        this.token = token
+    public setTokenObject(token: IToken) {
+    
+        this.token.peerCount =  token.peerCount
+        this.token.tokenQ.queue = token.tokenQ.queue
+        this.token.tokenQ.queueSize = token.tokenQ.queueSize
+       this.token.executedSequenceNumbers = new Map<string, number>();
+       for (const [key, val] of token.executedSequenceNumbers) {
+           this.token.executedSequenceNumbers.set(key, val)
+       }
     }
     public doIhaveToken() : boolean {
         return this.token.peerCount >= 1
@@ -128,7 +137,7 @@ export default class Mutex<PeerId extends string = string> {
     // sequence number in the local array, to filter outdated requests
     // on a valid check, it sets the local token to null and returns the actual token
     // on an invalid check, it returns undefined to indicated outdated request
-    public compareSequenceNumber(peer: PeerId, sqncNum: number): Token<PeerId> | undefined{
+    public compareSequenceNumber(peer: PeerId, sqncNum: number): IToken | undefined{
         const currentNum = this.requestSequenceNumbers.get(peer)
         const localSequenceNumber = this.requestSequenceNumbers.get(peer)
         console.log("Before condition: local request array "+localSequenceNumber);

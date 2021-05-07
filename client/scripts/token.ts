@@ -1,27 +1,22 @@
 
-//type peerPlaceHolder = Peer
-type peerPlaceHolder = string
-
-
-interface ItokenQueue<T> {
-    enq(siteId: T): boolean,
-    deq() : T | undefined,
-    size(): number
-    isElement(object: T): boolean
+interface ITokenQueue {
+    queue: string[]
+    queueSize: number;
 }
 
 /*
 * TokenQueue represents the queue maintained within the token
 */
-class TokenQueue<T> implements ItokenQueue<T> {
-    private queue : T[] = [];
-    private queueSize: number
+class TokenQueue implements ITokenQueue {
+    queue : string[] = [];
+    queueSize: number
+
     constructor(numPeers : number){
         this.queueSize = numPeers
         this.queue = new Array()
     }
     // Enque an object to the queue
-    enq(object: T): boolean {
+    enq(object: string): boolean {
         if (this.queue.length === this.queueSize) {
             return false
         }
@@ -29,13 +24,13 @@ class TokenQueue<T> implements ItokenQueue<T> {
         return true
     }
     //Deque an object from the queue
-    deq(): T | undefined {
+    deq(): string | undefined {
         return this.queue.shift()
     }
     size(): number{
         return this.queue.length
     }
-    isElement(object: T): boolean{
+    isElement(object: string): boolean{
         for (let el in this.queue){
             if (JSON.stringify(this.queue[el]) === JSON.stringify(object)){
                 return true
@@ -45,36 +40,51 @@ class TokenQueue<T> implements ItokenQueue<T> {
     }
 }
 
+export interface IToken {
+     peerCount: number
+     tokenQ: ITokenQueue
+     executedSequenceNumbers: Array<[string, number]>
+}
 
-export default class Token<T> {
 
-    readonly peerCount : number
+export default class Token {
+
+    peerCount : number
     // the queue maintained by the token
-    private readonly tokenQ : TokenQueue<T> // Q
+    tokenQ : TokenQueue // Q
     // a representation of the array of sequence number of the request that is recently executed by site
-    private readonly executedSequenceNumbers: Map<T, number> // LN[i]
+    executedSequenceNumbers: Map<string, number> // LN[i]
 
     // takes the list of all peers associated with this token and initialises 
     // the array of sequence numbers of the recently executed sites to 0
-    constructor(peers : T[]){
+    constructor(peers : string[]){
         this.peerCount = peers.length
-        this.tokenQ = new TokenQueue<T>(this.peerCount)
-        this.executedSequenceNumbers = new Map<T, number>()
+        this.tokenQ = new TokenQueue(this.peerCount)
+        this.executedSequenceNumbers = new Map<string, number>()
 
         peers.forEach(peer => {
             this.executedSequenceNumbers.set(peer, 0)
         });
     }
+
+    public toIToken(): IToken {
+        return {
+            peerCount: this.peerCount,
+            tokenQ: this.tokenQ,
+            executedSequenceNumbers: [...this.executedSequenceNumbers.entries()]
+        }    
+    }
+
     /**
      * appendToQueue pushes the supplied peerId to the token's queue
      */
-    public appendToQueue(peer: T): boolean {
+    public appendToQueue(peer: string): boolean {
         return this.tokenQ.enq(peer)
     }
     /**
      * pop from returns the first element from the token's queue
      */
-    public popFromQueue(): T | undefined {
+    public popFromQueue(): string | undefined {
         return this.tokenQ.deq()
     }
 
@@ -82,7 +92,7 @@ export default class Token<T> {
      * lookupQueer: looks up the token's queue and returns boolean to 
      * indicate presence or absence
      */
-    public lookupQueue(peer: T) : boolean{
+    public lookupQueue(peer: string) : boolean{
         return this.tokenQ.isElement(peer)
     }
 
@@ -90,7 +100,7 @@ export default class Token<T> {
         return this.tokenQ.size()
     }
 
-    public updateSequenceNumber(peer: T, sqncNum: number) :boolean {
+    public updateSequenceNumber(peer: string, sqncNum: number) :boolean {
         let currentSequenceNumber = this.executedSequenceNumbers.get(peer)
         if (currentSequenceNumber !== undefined){
             this.executedSequenceNumbers.set(peer, sqncNum)
@@ -100,7 +110,7 @@ export default class Token<T> {
     }
 
     
-    public getSequenceNumber(peer: T) : number | undefined{
+    public getSequenceNumber(peer: string) : number | undefined{
         return this.executedSequenceNumbers.get(peer)
     }
 

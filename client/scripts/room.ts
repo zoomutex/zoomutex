@@ -256,16 +256,16 @@ class Room {
         }
         const rni = parseInt(requestMessage.message)
         console.log("received token request from client ", peerId, " with sequence number", rni)
-        let tokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
-        if (tokenToSend !== undefined) {
+        let itokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
+        if (itokenToSend !== undefined) {
           // as sequence number check passed, i will send my token to client 4
           // send token to client4
           console.log("true? ", this.mutex?.doIhaveToken()) // true
           console.log("I have sent the token to the other client")
-          tokenToSend.printTokenData()
+          //tokenToSend.printTokenData()
           const msg: MutexMessage = {
             type: "response",
-            message: JSON.stringify(tokenToSend)
+            message: JSON.stringify(itokenToSend)
           }
           this.sendPeerData(peerId, JSON.stringify(msg))
         }
@@ -277,7 +277,6 @@ class Room {
         if (token !== undefined && this.mutex !== undefined) {
           this.mutex?.setTokenObject(token)
         }
-
         return
       }
       case "startCall": {
@@ -317,6 +316,7 @@ class Room {
   };
 
   private sendPeerDataToAll = (data: string): void => {
+    console.log("Sending message to all - ", data)
     for (const peerId of this.userStreams) {
       this.sendPeerData(peerId, data)
     }
