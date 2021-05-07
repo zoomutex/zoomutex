@@ -1,5 +1,5 @@
 import type Peer from "peerjs";
-import Token from "./token"
+import Token from "./token.js"
 
 export default class Mutex<PeerId extends string = string> {
     
