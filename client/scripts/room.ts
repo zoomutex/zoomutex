@@ -377,7 +377,9 @@ class Room {
   }
 
   private onSpeaking = async (): Promise<void> => {
-    if (!this.mutex?.doIhaveToken && this.peer !== undefined) {
+    console.log(this.mutex?.doIhaveToken())
+
+    if (!this.mutex?.doIhaveToken() && this.peer !== undefined) {
       let requestMessage: MutexMessage = {
         type: "request", // "tokenRequest",
         message: JSON.stringify(this.mutex?.accessCriticalSection(this.peer?.id))
