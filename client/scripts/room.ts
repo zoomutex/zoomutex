@@ -4,8 +4,8 @@ import Mutex from "./suzuKasa.js"
 import type Peer from "peerjs";
 import type hark from "hark";
 
-interface MutexMessages {
-  type: "request" | "response"
+interface MutexMessage {
+  type: "request" | "response" | "startCall" 
   message: string
 }
 
@@ -24,6 +24,7 @@ class Room {
   private isSpeaking = false
   private isInitialise = false
   private mutex: Mutex | null = null;
+  private initilizationIndex: number = -1
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
@@ -43,31 +44,42 @@ class Room {
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
     //  button to simulate a fake speaking event
-    let  fakeSpeechButton = document.getElementById("fakeSpeech") as HTMLButtonElement
+    let fakeSpeechButton = document.getElementById("fakeSpeech") as HTMLButtonElement
     if (fakeSpeechButton === null) {
       throw new Error("Button element was unexpectedly null");
     }
     fakeSpeechButton.onclick = this.flipSpeaking
 
-    let magicButton = document.getElementById("startMutex") //  button to simulate a fake speaking event
+    let magicButton = document.getElementById("startMutex") as HTMLButtonElement //  button to simulate a fake speaking event
     if (magicButton === null) {
       throw new Error("Button element was unexpectedly null");
     }
-    magicButton = magicButton as HTMLButtonElement;
-    magicButton.onclick = (()=> {
-      if (!this.isInitialise) {
-        const peers: string[] = [];
-        this.userStreams.forEach(element => {
-          peers.push(element)
-        })
-        this.mutex = new Mutex(peers, this.peer?.id)
-        console.log(this.mutex.printMutexObject())
-        this.isInitialise = true
-        if (magicButton !== null){
-          magicButton.innerHTML = "Local mutex object initialied"
-        }
+    
+    magicButton.onclick = ()=> {
+      if (magicButton !== null){
+        magicButton.innerText = "Local mutex object initialised"
       }
-    })
+      if (this.peer === null) {
+        return
+      }
+      if (!this.isInitialise) {
+
+        let requestMessage: MutexMessage = {
+          type: "startCall",
+          message: JSON.stringify([this.peer.id, ...this.userStreams])
+        }
+
+        this.sendPeerDataToAll(JSON.stringify(requestMessage))
+        this.mutex = new Mutex([this.peer.id, ...this.userStreams], this.peer?.id)
+        console.log("------------------------god person-----------------------------------")
+
+        console.log(this.mutex.printMutexObject())
+        console.log("-----------------------------------------------------------")
+
+        this.isInitialise = true
+        
+      }
+    }
 
 
     // Get the reference to `#videos`
@@ -117,10 +129,15 @@ class Room {
       body,
     });
 
-    const data = await res.json();
+    const data: string[] = await res.json();
     console.log("Inside on peer open " + data);
     this.connectToDataPeers(data);
     this.callPeers(data);
+
+    this.initilizationIndex = data.length - 1
+    //if (data.length == 0){
+      //this.godPerson = this.peer?.id!
+    //}
   };
 
   /**
@@ -230,14 +247,14 @@ class Room {
   private onPeerDataReceive = (peerId: string) => (data: any): void => {
     console.log(`received data '${data}' from ${peerId}`);
 
-    const requestMessage: MutexMessages = JSON.parse(data)
+    const requestMessage: MutexMessage = JSON.parse(data)
     switch (requestMessage.type) {
       case "request": {
         if (this.isSpeaking) {
           this.mutex?.pushRequestTotokenQ(peerId)
           return
         }
-        const rni = parseInt(requestMessage.message)
+        const rni = parseInt(JSON.parse(requestMessage.message))
         console.log("received token request from client ", peerId, " with sequence number", rni)
         let tokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
         if (tokenToSend !== undefined) {
@@ -246,7 +263,7 @@ class Room {
           console.log("true? ", this.mutex?.doIhaveToken()) // true
           console.log("I have sent the token to the other client")
           tokenToSend.printTokenData()
-          const msg: MutexMessages = {
+          const msg: MutexMessage = {
             type: "response",
             message: JSON.stringify(tokenToSend)
           }
@@ -261,6 +278,18 @@ class Room {
           this.mutex?.setTokenObject(token)
         }
 
+        return
+      }
+      case "startCall": {
+        console.log("received start call message from client ", peerId)
+        const peers: string[] = JSON.parse(requestMessage.message);
+        if (peers !== undefined) {
+          this.mutex = new Mutex(peers, this.peer?.id)
+          console.log("-----------------------------------------------------------")
+          console.log(this.mutex.printMutexObject())
+          console.log("-----------------------------------------------------------")
+          this.isInitialise = true
+        }
         return
       }
       default:
@@ -287,7 +316,13 @@ class Room {
     // TODO: clean up
   };
 
-  private sendPeerData = (peerId: string, data: any): void => {
+  private sendPeerDataToAll = (data: string): void => {
+    for (const peerId of this.userStreams) {
+      this.sendPeerData(peerId, data)
+    }
+  }
+
+  private sendPeerData = (peerId: string, data: string): void => {
     if (!this.dataConnections.has(peerId)) {
       console.error(`data ${peerId} does not have a data connection`);
       return;
@@ -343,9 +378,9 @@ class Room {
 
   private onSpeaking = async (): Promise<void> => {
     if (!this.mutex?.doIhaveToken && this.peer !== undefined) {
-      let requestMessage = {
-        type: 1, // "tokenRequest",
-        message: this.mutex?.accessCriticalSection(this.peer?.id)
+      let requestMessage: MutexMessage = {
+        type: "request", // "tokenRequest",
+        message: JSON.stringify(this.mutex?.accessCriticalSection(this.peer?.id))
       }
       this.userStreams.forEach(peer => {
         this.sendPeerData(peer, JSON.stringify(requestMessage))
@@ -355,9 +390,10 @@ class Room {
     }
     console.log("Speaking");
   };
+  
   private onStoppedSpeaking = (): void => {
-
     setTimeout(() => console.log("stopped speaking"), 5000);
+    
     if (this.peer !== undefined) {
       console.log("Releasing critical section")
       let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
