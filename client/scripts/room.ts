@@ -43,12 +43,32 @@ class Room {
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
     //  button to simulate a fake speaking event
-    let fakeSpeechButton = document.getElementById("fakeSpeech");
+    let  fakeSpeechButton = document.getElementById("fakeSpeech") as HTMLButtonElement
     if (fakeSpeechButton === null) {
       throw new Error("Button element was unexpectedly null");
     }
-    fakeSpeechButton = fakeSpeechButton as HTMLButtonElement;
     fakeSpeechButton.onclick = this.flipSpeaking
+
+    let magicButton = document.getElementById("startMutex") //  button to simulate a fake speaking event
+    if (magicButton === null) {
+      throw new Error("Button element was unexpectedly null");
+    }
+    magicButton = magicButton as HTMLButtonElement;
+    magicButton.onclick = (()=> {
+      if (!this.isInitialise) {
+        const peers: string[] = [];
+        this.userStreams.forEach(element => {
+          peers.push(element)
+        })
+        this.mutex = new Mutex(peers, this.peer?.id)
+        console.log(this.mutex.printMutexObject)
+        this.isInitialise = true
+        if (magicButton !== null){
+          magicButton.innerHTML = "Local mutex object initialied"
+        }
+      }
+    })
+
 
     // Get the reference to `#videos`
     const videosRef = document.getElementById("videos");
@@ -306,14 +326,7 @@ class Room {
 
   // use button as a toggle switch to provide speaking access
   private flipSpeaking = (): void => {
-    if (!this.isInitialise) {
-      const peers: string[] = [];
-      this.userStreams.forEach(element => {
-        peers.push(element)
-      })
-      this.mutex = new Mutex(peers, this.peer?.id)
-      this.isInitialise = true
-    }
+    
     let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
     if (fakeSpeechDisplay === null) {
       throw new Error("Fake status message element was unexpectedly null");
