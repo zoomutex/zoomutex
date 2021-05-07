@@ -4,6 +4,11 @@ import Mutex from "./suzuKasa.js"
 import type Peer from "peerjs";
 import type hark from "hark";
 
+interface MutexMessages {
+  type: "request" | "response"
+  message: string
+}
+
 class Room {
   private static instance: Room | null = null;
 
@@ -39,12 +44,12 @@ class Room {
 
     //  button to simulate a fake speaking event
     let fakeSpeechButton = document.getElementById("fakeSpeech");
-    if (fakeSpeechButton === null){
+    if (fakeSpeechButton === null) {
       throw new Error("Button element was unexpectedly null");
     }
     fakeSpeechButton = fakeSpeechButton as HTMLButtonElement;
     fakeSpeechButton.onclick = this.flipSpeaking
-    
+
     // Get the reference to `#videos`
     const videosRef = document.getElementById("videos");
     if (videosRef === null) {
@@ -70,9 +75,9 @@ class Room {
   }
 
   public onDelay = function delay(ms: number) {
-    return new Promise( resolve => setTimeout(resolve, ms) );
-}
- 
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
 
   /**
    * Event handler for when peerjs has opened a connection successfully.
@@ -93,7 +98,7 @@ class Room {
     });
 
     const data = await res.json();
-    console.log("Inside on peer open "+data);
+    console.log("Inside on peer open " + data);
     this.connectToDataPeers(data);
     this.callPeers(data);
   };
@@ -187,7 +192,7 @@ class Room {
       throw new Error("peer was unexpectedly null");
     }
 
-   // console.log("Inside connect to peers "+ typeof(peers));
+    // console.log("Inside connect to peers "+ typeof(peers));
 
     for (const peerId of peers) {
       // Connect to the peer
@@ -204,6 +209,43 @@ class Room {
 
   private onPeerDataReceive = (peerId: string) => (data: any): void => {
     console.log(`received data '${data}' from ${peerId}`);
+
+    const requestMessage: MutexMessages = JSON.parse(data)
+    switch (requestMessage.type) {
+      case "request": {
+        if (this.isSpeaking) {
+          this.mutex?.pushRequestTotokenQ(peerId)
+          return
+        }
+        const rni = parseInt(requestMessage.message)
+        console.log("received token request from client ", peerId, " with sequence number", rni)
+        let tokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
+        if (tokenToSend !== undefined) {
+          // as sequence number check passed, i will send my token to client 4
+          // send token to client4
+          console.log("true? ", this.mutex?.doIhaveToken()) // true
+          console.log("I have sent the token to the other client")
+          tokenToSend.printTokenData()
+          const msg: MutexMessages = {
+            type: "response",
+            message: JSON.stringify(tokenToSend)
+          }
+          this.sendPeerData(peerId, JSON.stringify(msg))
+        }
+        return
+      }
+      case "response": {
+        console.log("received token from client ", peerId, " with token", requestMessage.message)
+        const token = JSON.parse(requestMessage.message);
+        if (token !== undefined && this.mutex !== undefined) {
+          this.mutex?.setTokenObject(token)
+        }
+
+        return
+      }
+      default:
+        console.log("Invalid type")
+    }
   };
 
   private onPeerDataOpen = (
@@ -211,8 +253,8 @@ class Room {
     conn: Peer.DataConnection
   ) => (): void => {
     this.dataConnections.set(peerId, conn);
-    this.sendPeerData(peerId, "hello world!");
-    
+    // this.sendPeerData(peerId, "hello world!");
+
   };
 
   private onPeerDataError = (peerId: string) => (err: any): void => {
@@ -261,38 +303,53 @@ class Room {
     this.domVideos.set("user", videoEl);
     this.videosRef.appendChild(videoEl);
   };
-   
+
   // use button as a toggle switch to provide speaking access
-  private flipSpeaking = () : void => {
-    if (!this.isInitialise){
+  private flipSpeaking = (): void => {
+    if (!this.isInitialise) {
       const peers: string[] = [];
-      this.userStreams.forEach(element  => {
+      this.userStreams.forEach(element => {
         peers.push(element)
       })
       this.mutex = new Mutex(peers, this.peer?.id)
-    } 
+      this.isInitialise = true
+    }
     let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-    if (fakeSpeechDisplay === null){
+    if (fakeSpeechDisplay === null) {
       throw new Error("Fake status message element was unexpectedly null");
     }
-    if (this.isSpeaking){
+    if (this.isSpeaking) {
       this.onStoppedSpeaking()
       fakeSpeechDisplay.innerHTML = "Stopped speaking!"
-    }else{
+    } else {
       this.onSpeaking()
       fakeSpeechDisplay.innerHTML = "Now speaking..."
     }
     this.isSpeaking = !this.isSpeaking
   }
 
-   private onSpeaking = async (): Promise<void> => {
-
-   
-    console.log("speaking");
+  private onSpeaking = async (): Promise<void> => {
+    if (!this.mutex?.doIhaveToken && this.peer !== undefined) {
+      let requestMessage = {
+        type: 1, // "tokenRequest",
+        message: this.mutex?.accessCriticalSection(this.peer?.id)
+      }
+      this.userStreams.forEach(peer => {
+        this.sendPeerData(peer, JSON.stringify(requestMessage))
+      })
+      console.log("Waiting to speak")
+      return
+    }
+    console.log("Speaking");
   };
   private onStoppedSpeaking = (): void => {
-    
-    setTimeout( () => console.log("stopped speaking"), 5000 );
+
+    setTimeout(() => console.log("stopped speaking"), 5000);
+    if (this.peer !== undefined) {
+      console.log("Releasing critical section")
+      let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
+      console.log("Another peer in queue ", nextPeerId)
+    }
     //console.log("stopped speaking");
   };
 

@@ -12,14 +12,14 @@ export default class Rooms {
   /**
    * Map of roomId to user ids
    */
-  private readonly rooms = new Map<string, Set<string>>();
+  private readonly rooms = new Map<string, string[]>();
 
   /**
    * Map of user id to room id
    */
   private readonly users = new Map<string, string>();
 
-  private constructor() {}
+  private constructor() { }
 
   /**
    * Gets the peers of the current room. If the current room does not exist
@@ -34,15 +34,15 @@ export default class Rooms {
     this.users.set(peerId, roomId);
 
     if (peers === undefined) {
-      peers = new Set();
+      peers = [];
       this.rooms.set(roomId, peers);
     }
 
     // Get all the peers
-    const data: ReadonlyArray<string>  = Array.from(peers);
+    const data: ReadonlyArray<string> = Array.from(peers);
 
     // Add yourself to the room.
-    peers.add(peerId);
+    peers.push(peerId);
 
     // `data` does not contain yourself - it contains all the existing peers.
     return data;
@@ -61,8 +61,9 @@ export default class Rooms {
       return;
     }
 
-    peers.delete(peerId);
-    if (peers.size === 0) {
+    const idx = peers.indexOf(peerId);
+    peers.splice(idx, 1);
+    if (peers.length === 0) {
       this.rooms.delete(roomId);
     }
   };

@@ -1,4 +1,3 @@
-import type Peer from "peerjs";
 import Token from "./token.js"
 
 export default class Mutex<PeerId extends string = string> {
@@ -46,7 +45,8 @@ export default class Mutex<PeerId extends string = string> {
     // // releaseCriticalSection is called when this client has completed execution of the
     // // critical section. After all checks, it returns the Peer object that is next in queue for the token
     // // or null if queue is empty
-    public releaseCriticalSection(peer: PeerId) : PeerId | undefined {
+    public releaseCriticalSection(peer: PeerId | undefined) : PeerId | undefined {
+        if (peer === undefined) return undefined
         let nextTokenPeer : PeerId | undefined
 
     //     /** algo - update token object
@@ -98,7 +98,8 @@ export default class Mutex<PeerId extends string = string> {
 
     // // this method increments the local sequence number value for a specific peer
     // // by 1. It returns the incremented value
-    public accessCriticalSection(peer : PeerId): number {
+    public accessCriticalSection(peer : PeerId | undefined): number {
+        if (peer === undefined) return -1
         let rni = this.requestSequenceNumbers.get(peer)
         if (rni !=  undefined){
             rni = rni + 1
@@ -139,5 +140,9 @@ export default class Mutex<PeerId extends string = string> {
                 return undefined
             }
         }
+    }
+
+    public pushRequestTotokenQ(peer: PeerId) {
+        this.token.appendToQueue(peer)
     }
 }
