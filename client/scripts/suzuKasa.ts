@@ -106,13 +106,19 @@ export default class Mutex<PeerId extends string = string> {
     // // this method increments the local sequence number value for a specific peer
     // // by 1. It returns the incremented value
     public accessCriticalSection(peer : PeerId | undefined): number {
-        if (peer === undefined) return -1
+        if (peer === undefined) {
+            console.log("peer is underfined")
+            return -1
+        }
         let rni = this.requestSequenceNumbers.get(peer)
+        console.log("my rni is ", rni)
         if (rni !==  undefined){
             rni = rni + 1
             this.requestSequenceNumbers.set(peer, rni)
+            console.log("returning ", rni)
             return rni
         }
+        console.log("returning -1")
         return -1
     }
 
