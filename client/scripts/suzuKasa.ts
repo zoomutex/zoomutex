@@ -1,17 +1,13 @@
-
-import { type } from "os";
 import type Peer from "peerjs";
 import Token from "./token"
 
-//type peerPlaceHolder = Peer
-type peerPlaceHolder = string
-
-export default class MutexMagic {
+export default class Mutex<PeerId extends string = string> {
     
-    private token : Token
-    private requestSequenceNumbers : Map<peerPlaceHolder, number> // RN[i]
+   private token : Token<PeerId>
+   private requestSequenceNumbers : Map<PeerId, number> // RN[i]
     
-    constructor(peers: peerPlaceHolder[], self : peerPlaceHolder){
+    constructor(peers: PeerId[], self ?: PeerId){
+        console.log("Inside constructor");
         // on initialisation, we delegate the token to the first peer in the list
         // every other peer will have an empty token
         if (self == peers[0]) {
@@ -20,7 +16,8 @@ export default class MutexMagic {
         else {
             this.token = new Token([])
         } 
-        this.requestSequenceNumbers = new Map<peerPlaceHolder, number>()
+
+        this.requestSequenceNumbers = new Map<PeerId, number>()
 
         peers.forEach(peer => {
             this.requestSequenceNumbers.set(peer, 0) // every peer starts at 0
@@ -29,13 +26,13 @@ export default class MutexMagic {
 
     // this method will return the current token object, which can be sent to another peer. 
     // It will also set the current token object as empty
-    public getTokenObjectToSendToPeer() : Token {
+    public getTokenObjectToSendToPeer() : Token<PeerId> {
         const token = this.token
         this.removeToken()
         return token
     }
     // this method will set the current token object as the one received from another peer
-    public setTokenObject(token: Token) {
+    public setTokenObject(token: Token<PeerId>) {
         this.token = token
     }
     public doIhaveToken() : boolean {
@@ -46,20 +43,20 @@ export default class MutexMagic {
         this.token = new Token([]) // this will set token.peerCount = 0
     }
 
-    // releaseCriticalSection is called when this client has completed execution of the
-    // critical section. After all checks, it returns the Peer object that is next in queue for the token
-    // or null if queue is empty
-    public releaseCriticalSection(peer: peerPlaceHolder) : peerPlaceHolder | undefined {
-        let nextTokenPeer : peerPlaceHolder | undefined
+    // // releaseCriticalSection is called when this client has completed execution of the
+    // // critical section. After all checks, it returns the Peer object that is next in queue for the token
+    // // or null if queue is empty
+    public releaseCriticalSection(peer: PeerId) : PeerId | undefined {
+        let nextTokenPeer : PeerId | undefined
 
-        /** algo - update token object
-         - sets LN[i] = RNi[i] to indicate that its critical section request RNi[i] has been executed
-         - For every site Sj, whose ID is not present in the token queue Q, it appends its ID to Q if 
-           RNi[j] = LN[j] + 1 to indicate that site Sj has an outstanding request.
-         - After above updation, if the Queue Q is non-empty, it pops a site ID from the Q and sends 
-           the token to site indicated by popped ID.
-         - If the queue Q is empty, it keeps the token
-         */
+    //     /** algo - update token object
+    //      - sets LN[i] = RNi[i] to indicate that its critical section request RNi[i] has been executed
+    //      - For every site Sj, whose ID is not present in the token queue Q, it appends its ID to Q if 
+    //        RNi[j] = LN[j] + 1 to indicate that site Sj has an outstanding request.
+    //      - After above updation, if the Queue Q is non-empty, it pops a site ID from the Q and sends 
+    //        the token to site indicated by popped ID.
+    //      - If the queue Q is empty, it keeps the token
+    //      */
         const localSequenceNumber = this.requestSequenceNumbers.get(peer)
         if (localSequenceNumber != undefined){
             // update sequence array of the token -> sets LN[i] = RNi[i]
@@ -99,9 +96,9 @@ export default class MutexMagic {
         console.log("")
     }
 
-    // this method increments the local sequence number value for a specific peer
-    // by 1. It returns the incremented value
-    public accessCriticalSection(peer : peerPlaceHolder): number {
+    // // this method increments the local sequence number value for a specific peer
+    // // by 1. It returns the incremented value
+    public accessCriticalSection(peer : PeerId): number {
         let rni = this.requestSequenceNumbers.get(peer)
         if (rni !=  undefined){
             rni = rni + 1
@@ -117,7 +114,7 @@ export default class MutexMagic {
     // sequence number in the local array, to filter outdated requests
     // on a valid check, it sets the local token to null and returns the actual token
     // on an invalid check, it returns undefined to indicated outdated request
-    public compareSequenceNumber(peer: peerPlaceHolder, sqncNum: number): Token | undefined{
+    public compareSequenceNumber(peer: PeerId, sqncNum: number): Token<PeerId> | undefined{
         const currentNum = this.requestSequenceNumbers.get(peer)
         const localSequenceNumber = this.requestSequenceNumbers.get(peer)
         console.log("Before condition: local request array "+localSequenceNumber);

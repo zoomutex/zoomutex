@@ -1,5 +1,4 @@
-import MutexMagic from "./suzuKasa"
-
+import Mutex from "./suzuKasa"
 import Token from "./token"
 
 // using peerPlaceHolder as string for sandbox.
@@ -12,7 +11,7 @@ const clientWithToken = "client2"
 // every other peer will have an empty token
 
 // this is client 4
-var suzuki_Object_at_client4 = new MutexMagic(peers, me)
+var suzuki_Object_at_client4 = new Mutex(peers, me)
 console.log(suzuki_Object_at_client4.doIhaveToken()) // false as token would be with 1st index -> client2
 
 console.log("I am client 4 - ")
@@ -42,7 +41,7 @@ tokenAftersomeTime?.printTokenData()
 
 // Assume currently client 2 has this token, 
 // it would also have recieved it during initialisation
-const suzuki_Object_at_client2 = new MutexMagic(peers, clientWithToken)
+const suzuki_Object_at_client2 = new Mutex(peers, clientWithToken)
 console.log(suzuki_Object_at_client2.doIhaveToken()) // true
 suzuki_Object_at_client2.setTokenObject(tokenAftersomeTime)
 

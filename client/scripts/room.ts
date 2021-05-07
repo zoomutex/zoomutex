@@ -1,6 +1,8 @@
+import { getRoomId, getUserMediaStream } from "./utils.js";
+
+import Mutex from "./suzuKasa.js"
 import type Peer from "peerjs";
 import type hark from "hark";
-import { getRoomId, getUserMediaStream } from "./utils.js";
 
 class Room {
   private static instance: Room | null = null;
@@ -15,6 +17,8 @@ class Room {
   private readonly domVideos = new Map<string, HTMLVideoElement>();
   private readonly dataConnections = new Map<string, Peer.DataConnection>();
   private isSpeaking = false
+  private isInitialise = false
+  private mutex: Mutex | null = null;
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
@@ -89,6 +93,7 @@ class Room {
     });
 
     const data = await res.json();
+    console.log("Inside on peer open "+data);
     this.connectToDataPeers(data);
     this.callPeers(data);
   };
@@ -182,6 +187,8 @@ class Room {
       throw new Error("peer was unexpectedly null");
     }
 
+   // console.log("Inside connect to peers "+ typeof(peers));
+
     for (const peerId of peers) {
       // Connect to the peer
       const conn = this.peer.connect(peerId);
@@ -205,6 +212,7 @@ class Room {
   ) => (): void => {
     this.dataConnections.set(peerId, conn);
     this.sendPeerData(peerId, "hello world!");
+    
   };
 
   private onPeerDataError = (peerId: string) => (err: any): void => {
@@ -256,6 +264,13 @@ class Room {
    
   // use button as a toggle switch to provide speaking access
   private flipSpeaking = () : void => {
+    if (!this.isInitialise){
+      const peers: string[] = [];
+      this.userStreams.forEach(element  => {
+        peers.push(element)
+      })
+      this.mutex = new Mutex(peers, this.peer?.id)
+    } 
     let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
     if (fakeSpeechDisplay === null){
       throw new Error("Fake status message element was unexpectedly null");
@@ -270,7 +285,9 @@ class Room {
     this.isSpeaking = !this.isSpeaking
   }
 
-   private onSpeaking = (): void => {
+   private onSpeaking = async (): Promise<void> => {
+
+   
     console.log("speaking");
   };
   private onStoppedSpeaking = (): void => {
