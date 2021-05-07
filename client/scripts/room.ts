@@ -254,7 +254,7 @@ class Room {
           this.mutex?.pushRequestTotokenQ(peerId)
           return
         }
-        const rni = parseInt(JSON.parse(requestMessage.message))
+        const rni = parseInt(requestMessage.message)
         console.log("received token request from client ", peerId, " with sequence number", rni)
         let tokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
         if (tokenToSend !== undefined) {
