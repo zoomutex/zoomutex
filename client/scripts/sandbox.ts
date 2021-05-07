@@ -53,7 +53,7 @@ console.log("Comparing sequence numbers - ")
 // we receive request from client 4 with sequence number
 let tokenToSend = suzuki_Object_at_client2.compareSequenceNumber("client4", requestMessage?.rni)
 
-if (tokenToSend != undefined){
+if (tokenToSend !== undefined){
     // as sequence number check passed, i will send my token to client 4
     // send token to client4
     console.log(suzuki_Object_at_client2.doIhaveToken()) // false
@@ -82,7 +82,7 @@ if (tokenToSend) {
     const nextClient = suzuki_Object_at_client4.releaseCriticalSection("client4")
     console.log("Mutex object at client 4, after releasing Critical Section")
     suzuki_Object_at_client4.printMutexObject()
-    if (nextClient != undefined){
+    if (nextClient !== undefined){
         console.log("There was a peer in the queue - ", nextClient)
         console.log("Sending token to this peer")
         tokenToSend = suzuki_Object_at_client4.getTokenObjectToSendToPeer() 

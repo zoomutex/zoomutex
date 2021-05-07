@@ -61,7 +61,7 @@ class Room {
           peers.push(element)
         })
         this.mutex = new Mutex(peers, this.peer?.id)
-        console.log(this.mutex.printMutexObject)
+        console.log(this.mutex.printMutexObject())
         this.isInitialise = true
         if (magicButton !== null){
           magicButton.innerHTML = "Local mutex object initialied"

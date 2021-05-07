@@ -22,7 +22,7 @@ class TokenQueue<T> implements ItokenQueue<T> {
     }
     // Enque an object to the queue
     enq(object: T): boolean {
-        if (this.queue.length == this.queueSize) {
+        if (this.queue.length === this.queueSize) {
             return false
         }
         this.queue.push(object)
@@ -92,7 +92,7 @@ export default class Token<T> {
 
     public updateSequenceNumber(peer: T, sqncNum: number) :boolean {
         let currentSequenceNumber = this.executedSequenceNumbers.get(peer)
-        if (currentSequenceNumber != undefined){
+        if (currentSequenceNumber !== undefined){
             this.executedSequenceNumbers.set(peer, sqncNum)
             return true
         }

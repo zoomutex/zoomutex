@@ -6,13 +6,20 @@ export default class Mutex<PeerId extends string = string> {
    private requestSequenceNumbers : Map<PeerId, number> // RN[i]
     
     constructor(peers: PeerId[], self ?: PeerId){
-        console.log("Inside constructor");
+
+        console.log("Self", self)
+        console.log("Order inside constructor is")
+        peers.forEach(e => {
+            console.log( e);
+        })
         // on initialisation, we delegate the token to the first peer in the list
         // every other peer will have an empty token
-        if (self == peers[0]) {
+        if (self === peers[0]) {
+                console.log("This user has the token");
                 this.token = new Token(peers)
         }
         else {
+            console.log("This user does not have the token");
             this.token = new Token([])
         } 
 
@@ -43,7 +50,7 @@ export default class Mutex<PeerId extends string = string> {
     }
 
     // // releaseCriticalSection is called when this client has completed execution of the
-    // // critical section. After all checks, it returns the Peer object that is next in queue for the token
+    // // critical section. After all checks, it returns the Peer object uthat is next in queue for the token
     // // or null if queue is empty
     public releaseCriticalSection(peer: PeerId | undefined) : PeerId | undefined {
         if (peer === undefined) return undefined
@@ -58,18 +65,18 @@ export default class Mutex<PeerId extends string = string> {
     //      - If the queue Q is empty, it keeps the token
     //      */
         const localSequenceNumber = this.requestSequenceNumbers.get(peer)
-        if (localSequenceNumber != undefined){
+        if (localSequenceNumber !== undefined){
             // update sequence array of the token -> sets LN[i] = RNi[i]
             this.token.updateSequenceNumber(peer, localSequenceNumber)
 
             this.requestSequenceNumbers.forEach((num, peer) => {
                 // if this peer does now exist in the queue
                 if (!this.token.lookupQueue(peer)){
-                    // and, if RN[j] == LN[j] + 1
+                    // and, if RN[j] === LN[j] + 1
                     let outstandingSqncNum = this.token.getSequenceNumber(peer) 
-                    if (outstandingSqncNum != undefined){
+                    if (outstandingSqncNum !== undefined){
                         outstandingSqncNum = outstandingSqncNum + 1
-                        if (num == outstandingSqncNum){
+                        if (num === outstandingSqncNum){
                             this.token.appendToQueue(peer)
                         }
                     }
@@ -101,7 +108,7 @@ export default class Mutex<PeerId extends string = string> {
     public accessCriticalSection(peer : PeerId | undefined): number {
         if (peer === undefined) return -1
         let rni = this.requestSequenceNumbers.get(peer)
-        if (rni !=  undefined){
+        if (rni !==  undefined){
             rni = rni + 1
             this.requestSequenceNumbers.set(peer, rni)
             return rni
@@ -122,7 +129,7 @@ export default class Mutex<PeerId extends string = string> {
         const currentExecutionNum = this.token.getSequenceNumber(peer)
         console.log(currentExecutionNum);
         console.log(sqncNum);
-        if (currentNum != undefined && currentExecutionNum!= undefined){
+        if (currentNum !== undefined && currentExecutionNum!= undefined){
             if (currentNum < sqncNum){
                 
                 //updating own local request array
@@ -130,7 +137,7 @@ export default class Mutex<PeerId extends string = string> {
                 console.log("After condition: local request array "+this.requestSequenceNumbers.get(peer));
 
                 //Checking the second condition RNj[i] = LN[i] + 1
-                if(this.requestSequenceNumbers.get(peer) == currentExecutionNum+1){
+                if(this.requestSequenceNumbers.get(peer) === currentExecutionNum+1){
 
                     // send token to requesting client
                     return this.getTokenObjectToSendToPeer()
