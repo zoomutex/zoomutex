@@ -41,7 +41,7 @@ export default class Mutex {
     }
     // this method will set the current token object as the one received from another peer
     public setTokenObject(token: IToken) {
-    
+        console.info("I now have the token")
         this.token.peerCount =  token.peerCount
         this.token.tokenQ.queue = token.tokenQ.queue
         this.token.tokenQ.queueSize = token.tokenQ.queueSize
@@ -55,6 +55,7 @@ export default class Mutex {
     }
     // This method is called when this client has passed the token to another client
     public removeToken() {
+        console.info("I no longer have the token")
         this.token = new Token([]) // this will set token.peerCount = 0
     }
 
@@ -104,12 +105,13 @@ export default class Mutex {
     }
 
     public printMutexObject(){
-        console.log("Local request sequence numbers map:")
+        console.info("************* MUTEX OBJECT ****************")
+        console.info("Local request sequence numbers-")
         this.requestSequenceNumbers.forEach(e => {
-            console.log("  " + e)
+            console.info("  " + e)
         })
         this.token.printTokenData()
-        console.log("")
+        console.info("*******************************************")
     }
 
     // // this method increments the local sequence number value for a specific peer
@@ -120,11 +122,10 @@ export default class Mutex {
             return -1
         }
         let rni = this.requestSequenceNumbers.get(peer)
-        console.log("my rni is ", rni)
         if (rni !==  undefined){
             rni = rni + 1
             this.requestSequenceNumbers.set(peer, rni)
-            console.log("returning ", rni)
+            console.info("Sending request with sequence number - ", rni)
             return rni
         }
         console.log("returning -1")
@@ -140,21 +141,22 @@ export default class Mutex {
     public compareSequenceNumber(peer: PeerId, sqncNum: number): IToken | undefined{
         const currentNum = this.requestSequenceNumbers.get(peer)
         const localSequenceNumber = this.requestSequenceNumbers.get(peer)
-        console.log("Before condition: local request array "+localSequenceNumber);
+        //console.info("Before condition: local request array "+localSequenceNumber);
         const currentExecutionNum = this.token.getSequenceNumber(peer)
-        console.log(currentExecutionNum);
-        console.log(sqncNum);
+        //console.log(currentExecutionNum);
+        //console.log(sqncNum);
         if (currentNum !== undefined && currentExecutionNum!= undefined){
             if (currentNum < sqncNum){
                 
                 //updating own local request array
                 this.requestSequenceNumbers.set(peer, sqncNum)
-                console.log("After condition: local request array "+this.requestSequenceNumbers.get(peer));
+                //console.log("After condition: local request array "+this.requestSequenceNumbers.get(peer));
 
                 //Checking the second condition RNj[i] = LN[i] + 1
                 if(this.requestSequenceNumbers.get(peer) === currentExecutionNum+1){
 
-                    // send token to requesting client
+                    console.info("Sending token to client")
+                   // send token to requesting client
                     return this.getTokenObjectToSendToPeer()
                 }
                 

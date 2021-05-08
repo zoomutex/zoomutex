@@ -115,14 +115,13 @@ export default class Token {
     }
 
     public printTokenData() {
-        console.log("************** TOKEN *************")
-        console.log("Token queue size : " , this.tokenQ.size())
-        console.log("Token sequence numbers map : ")
+        console.info("-------------- TOKEN --------------")
+        console.info("Token queue size : " , this.tokenQ.size())
+        console.info("Token sequence numbers map : ")
         this.executedSequenceNumbers.forEach(element => {
-            console.log(element)
+            console.info(element)
         });
-        console.log("*******************************")
-        console.log("")
+        console.info("------------------------------------")
     }
 
 }   
