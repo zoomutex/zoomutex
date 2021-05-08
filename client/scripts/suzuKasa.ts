@@ -155,6 +155,9 @@ export default class Mutex {
         console.log("Before comparing: currentExecutionNum " + currentExecutionNum);
         if (localSequenceNumber === undefined) localSequenceNumber = -1
         if (currentExecutionNum === undefined) currentExecutionNum = -1
+
+        typeof(localSequenceNumber)
+
         if (localSequenceNumber !== -1 && currentExecutionNum !== -1){
             if (localSequenceNumber < sqncNum){
                 
