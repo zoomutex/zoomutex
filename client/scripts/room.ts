@@ -253,8 +253,8 @@ class Room {
     switch (requestMessage.type) {
       case "request": {
         if (this.isSpeaking) {
-          console.info("TOKEN REQUEST from client while I'm speaking, adding to token's queue")
-          this.mutex?.pushRequestTotokenQ(peerId)
+          console.info("TOKEN REQUEST from client while I'm speaking, wait for me to stop speaking before asking for token")
+         // this.mutex?.pushRequestTotokenQ(peerId)
           return
         }
         const rni = parseInt(requestMessage.message)
