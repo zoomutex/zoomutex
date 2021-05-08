@@ -257,7 +257,6 @@ class Room {
           //this.mutex?.pushRequestTotokenQ(peerId)
           return
         }
-        this.mutex?.pushRequestTotokenQ(peerId) // todo think about this queue, or can we remove q
         const rni = parseInt(requestMessage.message)
         console.info("TOKEN REQUEST from client ", peerId, " with SEQUENCE number ", rni)
         let itokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
@@ -407,6 +406,7 @@ class Room {
     setTimeout(() => {
       if (this.peer !== undefined) {
         console.info("Stopped speaking, Releasing critical section")
+        /*
         let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
         if (nextPeerId !== undefined){
           console.info("Sending token to next peer in queue - ", nextPeerId)
@@ -422,6 +422,8 @@ class Room {
         }else{
           console.info("No peers in token's queue. Token stays with me")
         }
+        */
+        this.mutex?.releaseCriticalSection(this.peer?.id)
         this.isreleased = true //we set if to false when we are speaking
       }
     }, 1000);

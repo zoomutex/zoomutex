@@ -25,7 +25,7 @@ class TokenQueue implements ITokenQueue {
     }
     //Deque an object from the queue
     deq(): string | undefined {
-        return this.queue.shift()
+        return this.queue.pop()
     }
     size(): number{
         return this.queue.length

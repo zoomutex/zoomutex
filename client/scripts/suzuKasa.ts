@@ -1,3 +1,4 @@
+import { threadId } from "worker_threads"
 import Token, { IToken } from "./token.js"
 
 type PeerId = string
@@ -97,7 +98,10 @@ export default class Mutex {
             // if the Queue Q is non-empty, it pops a site ID from the Q and sends 
             // the token to site indicated by popped ID
             if (this.token.queueSize() >= 0){
+                console.info("Popping token queue - " , this.token.printTokenData())
                 nextTokenPeer = this.token.popFromQueue()  
+                console.info("After poppinng token queue - " , this.token.printTokenData())
+
             }
             // else, we keep the token with this client
         }
