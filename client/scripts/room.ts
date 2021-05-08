@@ -254,7 +254,7 @@ class Room {
       case "request": {
         if (this.isSpeaking) {
           console.info("TOKEN REQUEST from client while I'm speaking, wait for me to stop speaking before asking for token")
-         // this.mutex?.pushRequestTotokenQ(peerId)
+          //this.mutex?.pushRequestTotokenQ(peerId)
           return
         }
         this.mutex?.pushRequestTotokenQ(peerId) // todo think about this queue, or can we remove q
@@ -424,7 +424,7 @@ class Room {
         }
         this.isreleased = true //we set if to false when we are speaking
       }
-    }, 5000);
+    }, 1000);
   };
 
   /**
