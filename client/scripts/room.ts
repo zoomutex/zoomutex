@@ -252,23 +252,29 @@ class Room {
     const requestMessage: MutexMessage = JSON.parse(data)
     switch (requestMessage.type) {
       case "request": {
-        if (this.isSpeaking) {
-          console.info("TOKEN REQUEST from client while I'm speaking, wait for me to stop speaking before asking for token")
-          //this.mutex?.pushRequestTotokenQ(peerId)
-          this.mutex?.updateSequenceNumber(peerId, parseInt(requestMessage.message))
-          return
-        }
-        const rni = parseInt(requestMessage.message)
-        console.info("TOKEN REQUEST from client ", peerId, " with SEQUENCE number ", rni)
-        let itokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
-        if (itokenToSend !== undefined) {
-          const msg: MutexMessage = {
-            type: "response",
-            message: JSON.stringify(itokenToSend)
+        if(this.mutex?.doIhaveToken()){
+          if (this.isSpeaking) {
+            console.info("TOKEN REQUEST from client while I'm speaking, wait for me to stop speaking before asking for token")
+            //this.mutex?.pushRequestTotokenQ(peerId)
+            this.mutex?.updateSequenceNumber(peerId, parseInt(requestMessage.message))
+            return
           }
-          console.info("Token to send is ", itokenToSend)
-          this.sendPeerData(peerId, JSON.stringify(msg))
+          const rni = parseInt(requestMessage.message)
+          console.info("TOKEN REQUEST from client ", peerId, " with SEQUENCE number ", rni)
+          let itokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
+          if (itokenToSend !== undefined) {
+            const msg: MutexMessage = {
+              type: "response",
+              message: JSON.stringify(itokenToSend)
+            }
+            console.info("Token to send is ", itokenToSend)
+            this.sendPeerData(peerId, JSON.stringify(msg))
+            return
+          }
+        }else{
+          this.mutex?.updateSequenceNumber(peerId, parseInt(requestMessage.message))
         }
+        
         return
       }
       case "response": {

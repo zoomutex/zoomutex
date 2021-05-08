@@ -148,21 +148,19 @@ export default class Mutex {
     // on a valid check, it sets the local token to null and returns the actual token
     // on an invalid check, it returns undefined to indicated outdated request
     public compareSequenceNumber(peer: PeerId, sqncNum: number): IToken | undefined{
-        const currentNum = this.requestSequenceNumbers.get(peer)
         const localSequenceNumber = this.requestSequenceNumbers.get(peer)
-        //console.info("Before condition: local request array "+localSequenceNumber);
+        console.info("Before comparing: local request array "+localSequenceNumber);
         const currentExecutionNum = this.token.getSequenceNumber(peer)
-        //console.log(currentExecutionNum);
-        //console.log(sqncNum);
-        if (currentNum !== undefined && currentExecutionNum!= undefined){
-            if (currentNum < sqncNum){
+        console.log("Before comparing: currentExecutionNum " + currentExecutionNum);
+        if (localSequenceNumber !== undefined && currentExecutionNum!= undefined){
+            if (localSequenceNumber < sqncNum){
                 
                 //updating own local request array
                 this.requestSequenceNumbers.set(peer, sqncNum)
                 //console.log("After condition: local request array "+this.requestSequenceNumbers.get(peer));
 
                 //Checking the second condition RNj[i] = LN[i] + 1
-                if(this.requestSequenceNumbers.get(peer) === currentExecutionNum+1){
+                if(this.requestSequenceNumbers.get(peer) === currentExecutionNum + 1){
 
                     console.info("Sending token to client")
                    // send token to requesting client
