@@ -283,8 +283,13 @@ class Room {
         if (token !== undefined && this.mutex !== undefined) {
           this.mutex?.setTokenObject(token)
         }
+        // Due to token being passed based on queue order, if I receive the token at a time I do not wish to speak, 
+        // I will have to execute CS once before I can release the token to next peer in queue. (due to how algo works)
+        // We can add a check to see if user is trying to speak or not. 
+        // If user is trying to speak, we continue as normal
+        // If not, we wait a timeout before sending the token to next peer
         setTimeout(() => {
-          if (!this.isSpeaking){
+          if (!this.isSpeaking){ 
             let nextPeerId = this.mutex?.nextPeer()
             if (nextPeerId !== undefined){
               console.info("Sending token to next peer in queue - ", nextPeerId)
