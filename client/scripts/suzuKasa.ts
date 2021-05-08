@@ -136,7 +136,12 @@ export default class Mutex {
         return -1
     }
 
-
+    public updateSequenceNumber(peer: PeerId, sqncNum: number) {
+        const currentNum = this.requestSequenceNumbers.get(peer)
+        if (currentNum !== undefined && currentNum < sqncNum){
+                this.requestSequenceNumbers.set(peer, sqncNum)
+        }
+    }
 
     // this method compares the sequence number of a peer with the currently existing
     // sequence number in the local array, to filter outdated requests
@@ -165,9 +170,11 @@ export default class Mutex {
                 }
                 
             } else{
+                console.info("Invalid return")
                 return undefined
             }
         }
+        console.info("Invalid return")
     }
 
     public pushRequestTotokenQ(peer: PeerId) {

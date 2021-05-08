@@ -255,6 +255,7 @@ class Room {
         if (this.isSpeaking) {
           console.info("TOKEN REQUEST from client while I'm speaking, wait for me to stop speaking before asking for token")
           //this.mutex?.pushRequestTotokenQ(peerId)
+          this.mutex?.updateSequenceNumber(peerId, parseInt(requestMessage.message))
           return
         }
         const rni = parseInt(requestMessage.message)
@@ -406,23 +407,7 @@ class Room {
     setTimeout(() => {
       if (this.peer !== undefined) {
         console.info("Stopped speaking, Releasing critical section")
-        /*
-        let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
-        if (nextPeerId !== undefined){
-          console.info("Sending token to next peer in queue - ", nextPeerId)
-          let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
-          if (itokenToSend !== undefined) {
-            const msg: MutexMessage = {
-              type: "response",
-              message: JSON.stringify(itokenToSend)
-            }
-            console.info("Token to send is ", itokenToSend)
-            this.sendPeerData(this.peer?.id!, JSON.stringify(msg))
-          }
-        }else{
-          console.info("No peers in token's queue. Token stays with me")
-        }
-        */
+        
         this.mutex?.releaseCriticalSection(this.peer?.id)
         this.isreleased = true //we set if to false when we are speaking
       }
