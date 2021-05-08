@@ -153,7 +153,9 @@ export default class Mutex {
         console.info("Before comparing: local request array "+localSequenceNumber);
         let currentExecutionNum = this.token.getSequenceNumber(peer)
         console.log("Before comparing: currentExecutionNum " + currentExecutionNum);
-        if (localSequenceNumber !== undefined && currentExecutionNum !== undefined){
+        if (localSequenceNumber === undefined) localSequenceNumber = -1
+        if (currentExecutionNum === undefined) currentExecutionNum = -1
+        if (localSequenceNumber !== -1 && currentExecutionNum !== -1){
             if (localSequenceNumber < sqncNum){
                 
                 //updating own local request array
