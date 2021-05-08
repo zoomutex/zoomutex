@@ -295,7 +295,7 @@ class Room {
                   message: JSON.stringify(itokenToSend)
                 }
                 console.info("Token to send is ", itokenToSend)
-                this.sendPeerData(this.peer?.id!, JSON.stringify(msg))
+                this.sendPeerData(nextPeerId, JSON.stringify(msg))
               }
             }
           }
@@ -441,7 +441,7 @@ console.info("added media stream to window")
               message: JSON.stringify(itokenToSend)
             }
             console.info("Token to send is ", itokenToSend)
-            this.sendPeerData(this.peer?.id!, JSON.stringify(msg))
+            this.sendPeerData(nextPeerId, JSON.stringify(msg))
           }
         }else{
           console.info("No peers in token's queue. Token stays with me")
