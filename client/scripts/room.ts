@@ -257,6 +257,7 @@ class Room {
          // this.mutex?.pushRequestTotokenQ(peerId)
           return
         }
+        this.mutex?.pushRequestTotokenQ(peerId) // todo think about this queue, or can we remove q
         const rni = parseInt(requestMessage.message)
         console.info("TOKEN REQUEST from client ", peerId, " with SEQUENCE number ", rni)
         let itokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
