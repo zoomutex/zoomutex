@@ -148,6 +148,7 @@ export default class Mutex {
     // on a valid check, it sets the local token to null and returns the actual token
     // on an invalid check, it returns undefined to indicated outdated request
     public compareSequenceNumber(peer: PeerId, sqncNum: number): IToken | undefined{
+        console.info("number in request - ", sqncNum)
         const localSequenceNumber = this.requestSequenceNumbers.get(peer)
         console.info("Before comparing: local request array "+localSequenceNumber);
         const currentExecutionNum = this.token.getSequenceNumber(peer)
@@ -168,11 +169,11 @@ export default class Mutex {
                 }
                 
             } else{
-                console.info("Invalid return")
+                console.info("Invalid return1 ")
                 return undefined
             }
         }
-        console.info("Invalid return")
+        console.info("Invalid return 2")
     }
 
     public pushRequestTotokenQ(peer: PeerId) {
