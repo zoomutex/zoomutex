@@ -149,9 +149,9 @@ export default class Mutex {
     // on an invalid check, it returns undefined to indicated outdated request
     public compareSequenceNumber(peer: PeerId, sqncNum: number): IToken | undefined{
         console.info("number in request - ", sqncNum)
-        const localSequenceNumber = this.requestSequenceNumbers.get(peer)
+        let localSequenceNumber = this.requestSequenceNumbers.get(peer)
         console.info("Before comparing: local request array "+localSequenceNumber);
-        const currentExecutionNum = this.token.getSequenceNumber(peer)
+        let currentExecutionNum = this.token.getSequenceNumber(peer)
         console.log("Before comparing: currentExecutionNum " + currentExecutionNum);
         if (localSequenceNumber !== undefined && currentExecutionNum !== undefined){
             if (localSequenceNumber < sqncNum){
