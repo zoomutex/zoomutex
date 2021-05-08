@@ -94,7 +94,7 @@ export default class Mutex {
                 }
                
             })
-            
+        
             // if the Queue Q is non-empty, it pops a site ID from the Q and sends 
             // the token to site indicated by popped ID
             if (this.token.queueSize() >= 0){
@@ -106,6 +106,15 @@ export default class Mutex {
             // else, we keep the token with this client
         }
         return nextTokenPeer
+    }
+
+    public nextPeer() : PeerId | undefined {
+        if (this.token.queueSize() >= 0){
+            console.info("Popping token queue - " , this.token.printTokenData())
+            let nextTokenPeer = this.token.popFromQueue()  
+            console.info("After poppinng token queue - " , this.token.printTokenData())
+            return nextTokenPeer
+        }
     }
 
     public printMutexObject(){

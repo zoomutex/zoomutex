@@ -255,7 +255,7 @@ class Room {
         if(this.mutex?.doIhaveToken()){
           if (this.isSpeaking) {
             console.info("TOKEN REQUEST from client while I'm speaking, wait for me to stop speaking before asking for token")
-            //this.mutex?.pushRequestTotokenQ(peerId)
+            this.mutex?.pushRequestTotokenQ(peerId)
             this.mutex?.updateSequenceNumber(peerId, parseInt(requestMessage.message))
             return
           }
@@ -283,6 +283,23 @@ class Room {
         if (token !== undefined && this.mutex !== undefined) {
           this.mutex?.setTokenObject(token)
         }
+        setTimeout(() => {
+          if (!this.isSpeaking){
+            let nextPeerId = this.mutex?.nextPeer()
+            if (nextPeerId !== undefined){
+              console.info("Sending token to next peer in queue - ", nextPeerId)
+              let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
+              if (itokenToSend !== undefined) {
+                const msg: MutexMessage = {
+                  type: "response",
+                  message: JSON.stringify(itokenToSend)
+                }
+                console.info("Token to send is ", itokenToSend)
+                this.sendPeerData(this.peer?.id!, JSON.stringify(msg))
+              }
+            }
+          }
+        }, 1000);
         return
       }
       case "startCall": {
@@ -353,7 +370,7 @@ class Room {
       videoEl.id = "user";
       videoEl.muted = true;
     }
-
+console.info("added media stream to window")
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
@@ -413,8 +430,22 @@ class Room {
     setTimeout(() => {
       if (this.peer !== undefined) {
         console.info("Stopped speaking, Releasing critical section")
-        
-        this.mutex?.releaseCriticalSection(this.peer?.id)
+
+        let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
+        if (nextPeerId !== undefined){
+          console.info("Sending token to next peer in queue - ", nextPeerId)
+          let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
+          if (itokenToSend !== undefined) {
+            const msg: MutexMessage = {
+              type: "response",
+              message: JSON.stringify(itokenToSend)
+            }
+            console.info("Token to send is ", itokenToSend)
+            this.sendPeerData(this.peer?.id!, JSON.stringify(msg))
+          }
+        }else{
+          console.info("No peers in token's queue. Token stays with me")
+        }
         this.isreleased = true //we set if to false when we are speaking
       }
     }, 1000);
