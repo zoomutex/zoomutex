@@ -135,7 +135,7 @@ export default class Mutex {
             return -1
         }
         let rni = this.requestSequenceNumbers.get(peer)
-        if (rni !==  undefined && rni !==0){
+        if (rni !==  undefined ){
             rni = rni + 1
             this.requestSequenceNumbers.set(peer, rni)
             console.info("Sending request with sequence number - ", rni)
