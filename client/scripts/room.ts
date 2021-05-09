@@ -291,6 +291,9 @@ class Room {
         setTimeout(() => {
           if (!this.isSpeaking){ 
             let nextPeerId = this.mutex?.nextPeer()
+            if(nextPeerId===undefined){
+              this.mutex?.setTokenObject(token)
+            }
             if (nextPeerId !== undefined){
               console.info("Sending token to next peer in queue - ", nextPeerId)
               let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
