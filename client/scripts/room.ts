@@ -408,7 +408,7 @@ console.info("added media stream to window")
     this.mutex?.printMutexObject();
     console.log("Do I have the token? - " , this.mutex?.doIhaveToken())
 
-    this.mutex?.firstTimeCriticalSection(this.peer?.id)
+   // this.mutex?.firstTimeCriticalSection(this.peer?.id)
     // incase we do not have the token, we end up sending a request message everytime we speak 
     // if we previously sent a request which has not been responded to (i.e its in the token's queue), 
     // do we send another request and add duplicates to the queue?
