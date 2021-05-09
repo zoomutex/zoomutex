@@ -411,6 +411,7 @@ console.info("added media stream to window")
     // do we send another request and add duplicates to the queue?
     // or do we not send a request incase we have an outstanding request? 
     if (!this.mutex?.doIhaveToken() && this.peer !== undefined) {
+      console.log("Inside testing function");
       let requestMessage: MutexMessage = {
         type: "request", // "tokenRequest",
         message: JSON.stringify(this.mutex?.accessCriticalSection(this.peer?.id))
