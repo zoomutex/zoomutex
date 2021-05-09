@@ -426,6 +426,7 @@ console.info("added media stream to window")
       return
     }
     this.isreleased = false // we set it to true when stop speaking
+    this.mutex?.accessCriticalSection(this.peer?.id)
     console.info("I have the power to speak");
   };
   
