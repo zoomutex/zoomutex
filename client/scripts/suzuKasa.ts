@@ -111,9 +111,10 @@ export default class Mutex {
 
     public nextPeer() : PeerId | undefined {
         if (this.token.queueSize() >= 0){
-            console.info("Popping token queue - " , this.token.printTokenData())
+          //  console.info("Popping token queue - " , this.token.printTokenData())
             let nextTokenPeer = this.token.popFromQueue()  
-            console.info("After poppinng token queue - " , this.token.printTokenData())
+         //   console.info("After poppinng token queue - " , this.token.printTokenData())
+            console.log(nextTokenPeer);
             return nextTokenPeer
         }
     }
