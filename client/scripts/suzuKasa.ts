@@ -135,7 +135,23 @@ export default class Mutex {
             return -1
         }
         let rni = this.requestSequenceNumbers.get(peer)
-        if (rni !==  undefined){
+        if (rni !==  undefined && rni !==0){
+            rni = rni + 1
+            this.requestSequenceNumbers.set(peer, rni)
+            console.info("Sending request with sequence number - ", rni)
+            return rni
+        }
+        console.log("returning -1")
+        return -1
+    }
+
+    public firstTimeCriticalSection(peer : PeerId | undefined): number {
+        if (peer === undefined) {
+            console.log("peer is underfined")
+            return -1
+        }
+        let rni = this.requestSequenceNumbers.get(peer)
+        if (rni !==  undefined && rni ===0){
             rni = rni + 1
             this.requestSequenceNumbers.set(peer, rni)
             console.info("Sending request with sequence number - ", rni)
