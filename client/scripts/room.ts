@@ -404,8 +404,11 @@ console.info("added media stream to window")
   }
 
   private onSpeaking = async (): Promise<void> => {
+    console.log("Token before speaking ")
+    this.mutex?.printMutexObject();
     console.log("Do I have the token? - " , this.mutex?.doIhaveToken())
 
+    this.mutex?.accessCriticalSection(this.peer?.id)
     // incase we do not have the token, we end up sending a request message everytime we speak 
     // if we previously sent a request which has not been responded to (i.e its in the token's queue), 
     // do we send another request and add duplicates to the queue?
@@ -436,7 +439,7 @@ console.info("added media stream to window")
     setTimeout(() => {
       if (this.peer !== undefined) {
         console.info("Stopped speaking, Releasing critical section")
-
+        console.log("Token after speaking ")
         let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
         if (nextPeerId !== undefined){
           console.info("Sending token to next peer in queue - ", nextPeerId)
