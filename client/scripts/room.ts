@@ -439,8 +439,12 @@ console.info("added media stream to window")
     setTimeout(() => {
       if (this.peer !== undefined) {
         console.info("Stopped speaking, Releasing critical section")
-        console.log("Token after speaking ")
+        console.log("Token after speaking and before releasing ")
+        this.mutex?.printMutexObject();
         let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
+
+        console.log("Token After releasing");
+        this.mutex?.printMutexObject();
         if (nextPeerId !== undefined){
           console.info("Sending token to next peer in queue - ", nextPeerId)
           let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
