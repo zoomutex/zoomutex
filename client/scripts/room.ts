@@ -281,6 +281,7 @@ class Room {
         console.info("TOKEN RECEIVED FROM CLIENT ", peerId, " with token data - ", requestMessage.message)
         const token = JSON.parse(requestMessage.message);
         if (token !== undefined && this.mutex !== undefined) {
+          console.log("Token set object method is called");
           this.mutex?.setTokenObject(token)
         }
         // Due to token being passed based on queue order, if I receive the token at a time I do not wish to speak, 
@@ -290,6 +291,7 @@ class Room {
         // If not, we wait a timeout before sending the token to next peer
         setTimeout(() => {
           if (!this.isSpeaking){ 
+            console.log("Time out gets executed");
             let nextPeerId = this.mutex?.nextPeer()
             if(nextPeerId===undefined){
               this.mutex?.setTokenObject(token)
@@ -307,7 +309,7 @@ class Room {
               }
             }
           }
-        }, 1000);
+        }, 5000);
         return
       }
       case "startCall": {
