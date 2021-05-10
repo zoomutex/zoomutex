@@ -290,7 +290,7 @@ class Room {
         // If not, we wait a timeout before sending the token to next peer
         setTimeout(() => {
           if (!this.isSpeaking){ 
-            let nextPeerId = this.mutex?.nextPeer()
+            let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
             if (nextPeerId !== undefined){
               console.info("Sending token to next peer in queue - ", nextPeerId)
               let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
@@ -302,7 +302,10 @@ class Room {
                 console.info("Token to send is ", itokenToSend)
                 this.sendPeerData(nextPeerId, JSON.stringify(msg))
               }
+            }else{
+              console.info("No peers in token's queue. Token stays with me")
             }
+            this.isreleased = true //we set if to false when we are speaking
           }
         }, 1000);
         return
