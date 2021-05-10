@@ -279,6 +279,8 @@ class Room {
       }
       case "response": {
         console.info("TOKEN RECEIVED FROM CLIENT ", peerId, " with token data - ", requestMessage.message)
+        console.log("This is my local request number and I receive this token")
+        this.mutex?.printMutexObject()
         const token = JSON.parse(requestMessage.message);
         if (token !== undefined && this.mutex !== undefined) {
           console.log("Token set object method is called");
