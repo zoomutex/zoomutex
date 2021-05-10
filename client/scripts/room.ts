@@ -267,6 +267,8 @@ class Room {
               type: "response",
               message: JSON.stringify(itokenToSend)
             }
+            console.log("Printing my local RN and executed sequence number before sending token")
+            this.mutex.printMutexObject();
             console.info("Token to send is ", itokenToSend)
             this.sendPeerData(peerId, JSON.stringify(msg))
             return
