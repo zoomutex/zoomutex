@@ -1,12 +1,12 @@
 import { getRoomId, getUserMediaStream } from "./utils.js";
 
-import Mutex from "./suzuKasa.js"
+import Mutex from "./mutex.js";
 import type Peer from "peerjs";
 import type hark from "hark";
 
 interface MutexMessage {
-  type: "request" | "response" | "startCall" 
-  message: string
+  type: "request" | "response" | "startCall" | "unMute";
+  message: string;
 }
 
 class Room {
@@ -14,17 +14,17 @@ class Room {
 
   private readonly roomId: string;
   private readonly userStream: MediaStream;
-  private readonly audioTrack: MediaStreamTrack;
   private readonly speechEvents: hark.Harker;
   private readonly peer: Peer | null = null;
   private readonly videosRef: HTMLVideoElement;
   private readonly userStreams = new Set<string>();
   private readonly domVideos = new Map<string, HTMLVideoElement>();
   private readonly dataConnections = new Map<string, Peer.DataConnection>();
-  private isSpeaking = false
-  private isInitialise = false
+  private isSpeaking = false;
+  private isInitialised = false;
   private mutex: Mutex | null = null;
-  private initilizationIndex: number = -1
+  private isReleased = false;
+  private isRequested = false;
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
@@ -34,53 +34,24 @@ class Room {
     if (tracks.length < 0) {
       throw new Error("Could not acquire audio track");
     }
-    this.audioTrack = tracks[0];
 
     // The following ts-ignore is necessary because we are importing from a CDN,
     // not from npm.
     // @ts-ignore
     this.speechEvents = hark(this.userStream, {});
+    this.speechEvents.setThreshold(-30);
     this.speechEvents.on("speaking", this.onSpeaking);
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
-    //  button to simulate a fake speaking event
-    let fakeSpeechButton = document.getElementById("fakeSpeech") as HTMLButtonElement
-    if (fakeSpeechButton === null) {
+    const createTokenButton = document.getElementById(
+      "startMutex"
+    ) as HTMLButtonElement;
+    if (createTokenButton === null) {
       throw new Error("Button element was unexpectedly null");
     }
-    fakeSpeechButton.onclick = this.flipSpeaking
 
-    let magicButton = document.getElementById("startMutex") as HTMLButtonElement //  button to simulate a fake speaking event
-    if (magicButton === null) {
-      throw new Error("Button element was unexpectedly null");
-    }
-    
-    magicButton.onclick = ()=> {
-      if (magicButton !== null){
-        magicButton.innerText = "Local mutex object initialised"
-      }
-      if (this.peer === null) {
-        return
-      }
-      if (!this.isInitialise) {
-
-        let requestMessage: MutexMessage = {
-          type: "startCall",
-          message: JSON.stringify([this.peer.id, ...this.userStreams])
-        }
-
-        this.sendPeerDataToAll(JSON.stringify(requestMessage))
-        this.mutex = new Mutex([this.peer.id, ...this.userStreams], this.peer?.id)
-        console.log("------------------------god person-----------------------------------")
-
-        console.log(this.mutex.printMutexObject())
-        console.log("-----------------------------------------------------------")
-
-        this.isInitialise = true
-        
-      }
-    }
-
+    createTokenButton.onclick = () =>
+      this.onTokenButtonClick(createTokenButton);
 
     // Get the reference to `#videos`
     const videosRef = document.getElementById("videos");
@@ -88,9 +59,6 @@ class Room {
       throw new Error("videos element was unexpectedly null");
     }
     this.videosRef = videosRef as HTMLVideoElement;
-
-    // Add the user's own media stream to the DOM
-    this.addMediaStreamToDOM(userStream);
 
     // The following ts-ignore is necessary because we are importing from a CDN,
     // not from npm.
@@ -106,10 +74,40 @@ class Room {
     this.peer.on("disconnected", this.onPeerDisconnected);
   }
 
-  public onDelay = function delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
+  private onTokenButtonClick = (btn: HTMLButtonElement): void => {
+    if (btn !== null) {
+      btn.innerText = "Local mutex object initialised";
+    }
 
+    if (this.peer === null) {
+      return;
+    }
+
+    if (!this.isInitialised) {
+      const request: MutexMessage = {
+        type: "startCall",
+        message: JSON.stringify([this.peer.id, ...this.userStreams]),
+      };
+
+      this.sendPeerDataToAll(JSON.stringify(request));
+
+      this.mutex = new Mutex([this.peer.id, ...this.userStreams], this.peer.id);
+
+      console.log(this.mutex.printMutexObject());
+      console.log(
+        "-----------------------------------------------------------"
+      );
+
+      this.isInitialised = true;
+      this.muteAllVideos();
+
+      let unMuteMessage: MutexMessage = {
+        type: "unMute",
+        message: "",
+      };
+      this.sendPeerDataToAll(JSON.stringify(unMuteMessage));
+    }
+  };
 
   /**
    * Event handler for when peerjs has opened a connection successfully.
@@ -118,6 +116,9 @@ class Room {
    * not exist - as the client, we don't really care).
    */
   private onPeerOpen = async (): Promise<void> => {
+    // Add the user's own media stream to the DOM
+    this.addMediaStreamToDOM(this.userStream, this.peer?.id!);
+
     console.log(`userId: ${this.peer?.id}`);
     const body = JSON.stringify({ userId: this.peer?.id });
 
@@ -130,14 +131,9 @@ class Room {
     });
 
     const data: string[] = await res.json();
-    console.log("Inside on peer open " + data);
+    //console.log("Inside on peer open " + data);
     this.connectToDataPeers(data);
     this.callPeers(data);
-
-    this.initilizationIndex = data.length - 1
-    //if (data.length == 0){
-      //this.godPerson = this.peer?.id!
-    //}
   };
 
   /**
@@ -163,7 +159,7 @@ class Room {
    * @param call The media connection we are receiving.
    */
   private onPeerCall = (call: Peer.MediaConnection): void => {
-    console.log(`answering call from ${call.peer}`);
+    //console.log(`answering call from ${call.peer}`);
     call.answer(this.userStream);
     call.on("stream", this.onCallStream(call.peer));
   };
@@ -181,16 +177,18 @@ class Room {
    *
    * This function is constructed in this way so we can log the `peerId`.
    */
-  private onCallStream = (peerId: string) => (stream: MediaStream): void => {
-    if (this.userStreams.has(peerId)) {
-      console.log(`ignored superfluous stream from ${peerId}`);
-      return;
-    }
+  private onCallStream =
+    (peerId: string) =>
+    (stream: MediaStream): void => {
+      if (this.userStreams.has(peerId)) {
+        //console.log(`ignored superfluous stream from ${peerId}`);
+        return;
+      }
 
-    console.log(`received stream from ${peerId}`);
-    this.userStreams.add(peerId);
-    this.addMediaStreamToDOM(stream, peerId);
-  };
+      console.log(`received stream from ${peerId}`);
+      this.userStreams.add(peerId);
+      this.addMediaStreamToDOM(stream, peerId);
+    };
 
   /**
    * Event handler for when we close a call.
@@ -207,14 +205,16 @@ class Room {
    *
    * This function is constructed in this way so we can log the `peerId`.
    */
-  private onCallError = (peerId: string) => (err: any): void => {
-    console.error(`call ${peerId} has had an error: ${err}`);
-    // TODO: clean up
-  };
+  private onCallError =
+    (peerId: string) =>
+    (err: any): void => {
+      console.error(`call ${peerId} has had an error: ${err}`);
+      // TODO: clean up
+    };
 
   private onPeerDataConnection = (conn: Peer.DataConnection): void => {
     const peerId = conn.peer;
-    console.log(`received data connection from ${peerId}`);
+    // console.log(`received data connection from ${peerId}`);
     this.dataConnections.set(peerId, conn);
 
     // When we receive a data connection, we need to register the event handlers.
@@ -244,71 +244,165 @@ class Room {
     }
   };
 
-  private onPeerDataReceive = (peerId: string) => (data: any): void => {
-    console.log(`received data '${data}' from ${peerId}`);
+  private onPeerDataReceive =
+    (peerId: string) =>
+    (data: any): void => {
+      console.log(`received data '${data}' from ${peerId}`);
+      console.info("Received a mutex message from peer");
 
-    const requestMessage: MutexMessage = JSON.parse(data)
-    switch (requestMessage.type) {
-      case "request": {
-        if (this.isSpeaking) {
-          this.mutex?.pushRequestTotokenQ(peerId)
-          return
+      const requestMsg: MutexMessage = JSON.parse(data);
+      switch (requestMsg.type) {
+        case "unMute": {
+          this.onUnMute(peerId);
+          return;
         }
-        const rni = parseInt(requestMessage.message)
-        console.log("received token request from client ", peerId, " with sequence number", rni)
-        let itokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
-        if (itokenToSend !== undefined) {
-          // as sequence number check passed, i will send my token to client 4
-          // send token to client4
-          console.log("true? ", this.mutex?.doIhaveToken()) // true
-          console.log("I have sent the token to the other client")
-          //tokenToSend.printTokenData()
-          const msg: MutexMessage = {
-            type: "response",
-            message: JSON.stringify(itokenToSend)
-          }
-          this.sendPeerData(peerId, JSON.stringify(msg))
+        case "request": {
+          this.onRequest(peerId, requestMsg);
+          return;
         }
-        return
+        case "response": {
+          this.onResponse(peerId, requestMsg);
+          return;
+        }
+        case "startCall": {
+          this.onStartCall(requestMsg);
+          return;
+        }
+        default:
+          console.log("Invalid type");
       }
-      case "response": {
-        console.log("received token from client ", peerId, " with token", requestMessage.message)
-        const token = JSON.parse(requestMessage.message);
-        if (token !== undefined && this.mutex !== undefined) {
-          this.mutex?.setTokenObject(token)
-        }
-        return
-      }
-      case "startCall": {
-        console.log("received start call message from client ", peerId)
-        const peers: string[] = JSON.parse(requestMessage.message);
-        if (peers !== undefined) {
-          this.mutex = new Mutex(peers, this.peer?.id)
-          console.log("-----------------------------------------------------------")
-          console.log(this.mutex.printMutexObject())
-          console.log("-----------------------------------------------------------")
-          this.isInitialise = true
-        }
-        return
-      }
-      default:
-        console.log("Invalid type")
+    };
+
+  private onUnMute = (peerId: string): void => {
+    this.muteAllVideos();
+    const tokenUserVideo = document.getElementById(peerId) as HTMLVideoElement;
+
+    tokenUserVideo.muted = false;
+    console.info("Unmuted - ", peerId);
+  };
+
+  private onRequest = (peerId: string, requestMsg: MutexMessage): void => {
+    if (this.mutex?.doIHaveToken() === false) {
+      this.mutex?.updateSequenceNumber(peerId, parseInt(requestMsg.message));
+      return;
     }
+
+    if (this.isSpeaking) {
+      // I have the token and I'm speaking
+      console.info("TOKEN REQUEST from client while I'm speaking");
+      this.mutex?.appendToTokenQueue(peerId);
+      this.mutex?.updateSequenceNumber(peerId, parseInt(requestMsg.message));
+      return;
+    }
+
+    // I'm not speaking
+    const rni = parseInt(requestMsg.message);
+    console.info(
+      `TOKEN REQUEST from client ${peerId} with SEQUENCE number ${rni}`
+    );
+    let token = this.mutex?.compareSequenceNumber(peerId, rni);
+    if (token === undefined) {
+      return;
+    }
+
+    // I have the token and I'm not speaking
+    const msg: MutexMessage = {
+      type: "response",
+      message: JSON.stringify(token),
+    };
+    console.info("Token to send is ", token);
+    this.sendPeerData(peerId, JSON.stringify(msg));
   };
 
-  private onPeerDataOpen = (
-    peerId: string,
-    conn: Peer.DataConnection
-  ) => (): void => {
-    this.dataConnections.set(peerId, conn);
-    // this.sendPeerData(peerId, "hello world!");
+  private onResponse = (peerId: string, requestMsg: MutexMessage): void => {
+    console.info(
+      `TOKEN RECEIVED ${peerId} with token data - ${requestMsg.message}`
+    );
 
+    const token = JSON.parse(requestMsg.message);
+    if (token !== undefined && this.mutex !== undefined) {
+      this.mutex?.setTokenObject(token);
+    }
+
+    this.muteAllVideos();
+
+    const msg: MutexMessage = {
+      type: "unMute",
+      message: "",
+    };
+    this.sendPeerDataToAll(JSON.stringify(msg));
+
+    const speechStatus = document.getElementById(
+      "speakStatus"
+    ) as HTMLParagraphElement;
+    if (speechStatus === null) {
+      throw new Error("Fake status message element was unexpectedly null");
+    }
+    speechStatus.innerText =
+      "Received token, 3 seconds to speak before token is potentially passed to next in queue";
+    this.isRequested = false;
+
+    // Due to token being passed based on queue order, if I receive the token at
+    // a time I do not wish to speak, I will have to execute CS once before I
+    // can release the token to next peer in queue. (due to how the algorithm
+    // works).
+    // We can add a check to see if user is trying to speak or not.
+    // If user is trying to speak, we continue as normal
+    // If not, we wait a timeout before sending the token to next peer
+    setTimeout(() => {
+      if (!this.isSpeaking) {
+        let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id);
+
+        if (nextPeerId !== undefined) {
+          console.info("Sending token to next peer in queue - ", nextPeerId);
+
+          const token = this.mutex?.getTokenObject();
+          if (token !== undefined) {
+            const msg: MutexMessage = {
+              type: "response",
+              message: JSON.stringify(token),
+            };
+            console.info("Token to send is ", token);
+            this.sendPeerData(nextPeerId, JSON.stringify(msg));
+            speechStatus.innerText = "Token sent..";
+          }
+        } else {
+          console.info("No peers in token's queue. Token stays with me");
+        }
+        this.isReleased = true; //we set if to false when we are speaking
+      }
+    }, 3000);
   };
 
-  private onPeerDataError = (peerId: string) => (err: any): void => {
-    console.error(`data ${peerId} has had an error: ${err}`);
-    // TODO: clean up
+  private onStartCall = (msg: MutexMessage): void => {
+    const peers: string[] = JSON.parse(msg.message);
+    if (peers === undefined || this.peer === null) {
+      return;
+    }
+
+    this.mutex = new Mutex(peers, this.peer.id);
+    console.info(
+      "----------------------------Follower person--------------------------------"
+    );
+    console.info(this.mutex.printMutexObject());
+    console.info(
+      "---------------------------------------------------------------------------"
+    );
+    this.isInitialised = true;
   };
+
+  private onPeerDataOpen =
+    (peerId: string, conn: Peer.DataConnection) => (): void => {
+      this.dataConnections.set(peerId, conn);
+      //this.sendPeerData(peerId, "hello world!");
+    };
+
+  private onPeerDataError =
+    (peerId: string) =>
+    (err: any): void => {
+      console.error(`data ${peerId} has had an error: ${err}`);
+      // TODO: clean up
+    };
 
   private onPeerDataClose = (peerId: string) => (): void => {
     console.warn(`data ${peerId} has closed`);
@@ -316,11 +410,11 @@ class Room {
   };
 
   private sendPeerDataToAll = (data: string): void => {
-    console.log("Sending message to all - ", data)
+    //console.log("Sending message to all - ", data)
     for (const peerId of this.userStreams) {
-      this.sendPeerData(peerId, data)
+      this.sendPeerData(peerId, data);
     }
-  }
+  };
 
   private sendPeerData = (peerId: string, data: string): void => {
     if (!this.dataConnections.has(peerId)) {
@@ -338,80 +432,119 @@ class Room {
    * @param stream The media stream to include for the video.
    * @param peerId The id of the peer whose media stream this is.
    */
-  private addMediaStreamToDOM = (
-    stream: MediaStream,
-    peerId?: string
-  ): void => {
+  private addMediaStreamToDOM = (stream: MediaStream, peerId: string): void => {
     const videoEl = document.createElement("video");
-    if (peerId === undefined) {
-      // it's the user
-      videoEl.id = "user";
-      videoEl.muted = true;
-    }
+    videoEl.id = peerId;
+    videoEl.muted = true;
 
+    console.info("added media stream to window");
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
     videoEl.height = 360;
     videoEl.width = 480;
 
-    this.domVideos.set("user", videoEl);
+    this.domVideos.set(peerId, videoEl);
     this.videosRef.appendChild(videoEl);
   };
 
-  // use button as a toggle switch to provide speaking access
-  private flipSpeaking = (): void => {
-    
-    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-    if (fakeSpeechDisplay === null) {
-      throw new Error("Fake status message element was unexpectedly null");
+  private muteAllVideos = (): void => {
+    for (const peerId of this.domVideos.keys()) {
+      console.log("Muting all peers");
+      const video = document.getElementById(peerId) as HTMLVideoElement;
+      video.muted = true;
     }
-    if (this.isSpeaking) {
-      this.onStoppedSpeaking()
-      fakeSpeechDisplay.innerHTML = "Stopped speaking!"
-    } else {
-      this.onSpeaking()
-      fakeSpeechDisplay.innerHTML = "Now speaking..."
-    }
-    this.isSpeaking = !this.isSpeaking
-  }
+  };
 
   private onSpeaking = async (): Promise<void> => {
-    console.log(this.mutex?.doIhaveToken())
+    this.isSpeaking = true;
 
-    if (!this.mutex?.doIhaveToken() && this.peer !== undefined) {
+    const speechStatus = document.getElementById("speakStatus");
+    if (speechStatus === null) {
+      throw new Error("Fake status message element was unexpectedly null");
+    }
+
+    console.log("Do I have the token? - ", this.mutex?.doIHaveToken());
+    if (this.mutex === null) {
+      speechStatus.innerText = "Token not initialised";
+      return;
+    }
+
+    // incase we do not have the token, we end up sending a request message everytime we speak
+    // if we previously sent a request which has not been responded to (i.e its in the token's queue),
+    // do we send another request and add duplicates to the queue?
+    // or do we not send a request incase we have an outstanding request?
+    if (!this.mutex?.doIHaveToken() && this.peer !== undefined) {
+      if (this.isRequested) {
+        // already sent a token request, awaiting response before sending next request
+        speechStatus.innerText = "Waiting for token response before speaking";
+        return;
+      }
       let requestMessage: MutexMessage = {
         type: "request", // "tokenRequest",
-        message: JSON.stringify(this.mutex?.accessCriticalSection(this.peer?.id))
-      }
-      this.userStreams.forEach(peer => {
-        this.sendPeerData(peer, JSON.stringify(requestMessage))
-      })
-      console.log("Waiting to speak")
-      return
+        message: JSON.stringify(
+          this.mutex?.accessCriticalSection(this.peer?.id)
+        ),
+      };
+      this.userStreams.forEach((peer) => {
+        this.sendPeerData(peer, JSON.stringify(requestMessage));
+      });
+      this.isRequested = true; // set false after receiving response
+      console.info("Token request sent to all peers, waiting my turn....");
+
+      speechStatus.innerText =
+        "No Token, request sent to all peers, waiting my turn....";
+      return;
     }
-    console.log("Speaking");
-  };
-  
-  private onStoppedSpeaking = (): void => {
-    setTimeout(() => console.log("stopped speaking"), 5000);
-    
-    if (this.peer !== undefined) {
-      console.log("Releasing critical section")
-      let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
-      console.log("Another peer in queue ", nextPeerId)
-    }
-    //console.log("stopped speaking");
+
+    this.isReleased = false; // we set it to true when stop speaking
+
+    console.info("I have the power to speak");
+    speechStatus.innerText = "I have the token, I am speaking...";
   };
 
-  /**
-   * Mutes or unmutes the audio tracks for the user's media stream.
-   * @param isMuted
-   */
-  public toggleMuted = (isMuted?: boolean): void => {
-    this.audioTrack.enabled = !(isMuted !== undefined
-      ? isMuted
-      : !this.audioTrack.enabled);
+  private onStoppedSpeaking = (): void => {
+    this.isSpeaking = false;
+
+    // this check prevents repeated calls to mutex.releaseCriticalSection
+    if (this.isReleased) {
+      console.log(
+        "I have already released CS and sent token, " +
+          "this method is called automatically by 'hark' whenever your audio signals a stopped-speech event"
+      );
+      return;
+    }
+    console.log("Stopped speaking");
+
+    setTimeout(() => {
+      if (this.peer !== null) {
+        const speechStatus = document.getElementById("speakStatus");
+        if (speechStatus === null) {
+          throw new Error("Fake status message element was unexpectedly null");
+        }
+
+        console.info("Stopped speaking, Releasing critical section");
+
+        let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id);
+        if (nextPeerId !== undefined) {
+          console.info("Sending token to next peer in queue - ", nextPeerId);
+          let itokenToSend = this.mutex?.getTokenObject();
+          if (itokenToSend !== undefined) {
+            const msg: MutexMessage = {
+              type: "response",
+              message: JSON.stringify(itokenToSend),
+            };
+            console.info("Token to send is ", itokenToSend);
+            this.sendPeerData(nextPeerId, JSON.stringify(msg));
+          }
+        } else {
+          console.info("No peers in token's queue. Token stays with me");
+        }
+
+        speechStatus.innerText = "Stopped speaking!";
+        this.isReleased = true; //we set if to false when we are speaking
+      }
+    }, 1000);
   };
 
   /**

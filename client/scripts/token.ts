@@ -1,130 +1,155 @@
-
 interface ITokenQueue {
-    queue: string[]
-    queueSize: number;
+  queue: string[];
+  queueSize: number;
 }
 
 /*
-* TokenQueue represents the queue maintained within the token
-*/
+ * TokenQueue represents the queue maintained within the token
+ */
 class TokenQueue implements ITokenQueue {
-    queue : string[] = [];
-    queueSize: number
+  queue: string[] = [];
+  queueSize: number;
 
-    constructor(numPeers : number){
-        this.queueSize = numPeers
-        this.queue = new Array()
+  constructor(numPeers: number) {
+    this.queueSize = numPeers;
+    this.queue = new Array();
+  }
+
+  /**
+   * Enqueue an on object to the queue
+   * @param object
+   * @returns
+   */
+  public enq(object: string): boolean {
+    if (this.queue.length === this.queueSize) {
+      return false;
     }
-    // Enque an object to the queue
-    enq(object: string): boolean {
-        if (this.queue.length === this.queueSize) {
-            return false
-        }
-        this.queue.push(object)
-        return true
+    this.queue.push(object);
+    return true;
+  }
+
+  /**
+   * Dequeue an object from the queue
+   * @returns
+   */
+  public deq(): string | undefined {
+    return this.queue.pop();
+  }
+
+  /**
+   * Get the size of the queue
+   * @returns
+   */
+  public size(): number {
+    return this.queue.length;
+  }
+
+  /**
+   * Checks to see if the object is contained
+   * @param object
+   * @returns
+   */
+  public contains(object: string): boolean {
+    for (const el in this.queue) {
+      if (JSON.stringify(this.queue[el]) === JSON.stringify(object)) {
+        return true;
+      }
     }
-    //Deque an object from the queue
-    deq(): string | undefined {
-        return this.queue.shift()
-    }
-    size(): number{
-        return this.queue.length
-    }
-    isElement(object: string): boolean{
-        for (let el in this.queue){
-            if (JSON.stringify(this.queue[el]) === JSON.stringify(object)){
-                return true
-            }
-        }
-        return false
-    }
+    return false;
+  }
 }
 
 export interface IToken {
-     peerCount: number
-     tokenQ: ITokenQueue
-     executedSequenceNumbers: Array<[string, number]>
+  peerCount: number;
+  tokenQueue: ITokenQueue;
+  executedSequenceNumbers: Array<[string, number]>;
 }
 
-
 export default class Token {
+  peerCount: number;
 
-    peerCount : number
-    // the queue maintained by the token
-    tokenQ : TokenQueue // Q
-    // a representation of the array of sequence number of the request that is recently executed by site
-    executedSequenceNumbers: Map<string, number> // LN[i]
+  /**
+   * The queue maintained by the token
+   */
+  queue: TokenQueue;
 
-    // takes the list of all peers associated with this token and initialises 
-    // the array of sequence numbers of the recently executed sites to 0
-    constructor(peers : string[]){
-        this.peerCount = peers.length
-        this.tokenQ = new TokenQueue(this.peerCount)
-        this.executedSequenceNumbers = new Map<string, number>()
+  /**
+   * Representation of the array of sequence numbers from the request that has
+   * recently been executed.
+   */
+  executedSequenceNumbers: Map<string, number>; // LN[i]
 
-        peers.forEach(peer => {
-            this.executedSequenceNumbers.set(peer, 0)
-        });
+  /**
+   * Takes the list of all peers associated with this token and initialises the
+   * array of sequence numbers of the recently executed sites to 0.
+   * @param peers
+   */
+  constructor(peers: string[]) {
+    this.peerCount = peers.length;
+    this.queue = new TokenQueue(this.peerCount);
+    this.executedSequenceNumbers = new Map<string, number>();
+
+    for (const peerId of peers) {
+      this.executedSequenceNumbers.set(peerId, 0);
     }
+  }
 
-    public toIToken(): IToken {
-        return {
-            peerCount: this.peerCount,
-            tokenQ: this.tokenQ,
-            executedSequenceNumbers: [...this.executedSequenceNumbers.entries()]
-        }    
+  public toIToken(): IToken {
+    return {
+      peerCount: this.peerCount,
+      tokenQueue: this.queue,
+      executedSequenceNumbers: [...this.executedSequenceNumbers.entries()],
+    };
+  }
+
+  /**
+   * Appends the supplied peerId to the token's queue.
+   */
+  public appendToQueue(peer: string): boolean {
+    return this.queue.enq(peer);
+  }
+  /**
+   * Pops from returns the first element from the token's queue.
+   */
+  public popFromQueue(): string | undefined {
+    return this.queue.deq();
+  }
+
+  /**
+   * Looks up the token's queue and returns a Boolean to indicate presence or
+   * absence
+   */
+  public lookupQueue(peer: string): boolean {
+    return this.queue.contains(peer);
+  }
+
+  public queueSize(): number {
+    return this.queue.size();
+  }
+
+  public updateSequenceNumber(peer: string, sqncNum: number): boolean {
+    let currentSequenceNumber = this.executedSequenceNumbers.get(peer);
+    if (currentSequenceNumber !== undefined) {
+      this.executedSequenceNumbers.set(peer, sqncNum);
+      return true;
     }
+    return false;
+  }
 
-    /**
-     * appendToQueue pushes the supplied peerId to the token's queue
-     */
-    public appendToQueue(peer: string): boolean {
-        return this.tokenQ.enq(peer)
-    }
-    /**
-     * pop from returns the first element from the token's queue
-     */
-    public popFromQueue(): string | undefined {
-        return this.tokenQ.deq()
-    }
+  public getSequenceNumber(peer: string): number | undefined {
+    return this.executedSequenceNumbers.get(peer);
+  }
 
-    /**
-     * lookupQueer: looks up the token's queue and returns boolean to 
-     * indicate presence or absence
-     */
-    public lookupQueue(peer: string) : boolean{
-        return this.tokenQ.isElement(peer)
-    }
+  public printTokenData() {
+    console.info("-------------- TOKEN --------------");
+    console.info("Token queue size : ", this.queue.size());
 
-    public queueSize() : number{
-        return this.tokenQ.size()
-    }
+    const seqNumbers: number[] = [];
+    this.executedSequenceNumbers.forEach((element) => {
+      seqNumbers.push(element);
+    });
 
-    public updateSequenceNumber(peer: string, sqncNum: number) :boolean {
-        let currentSequenceNumber = this.executedSequenceNumbers.get(peer)
-        if (currentSequenceNumber !== undefined){
-            this.executedSequenceNumbers.set(peer, sqncNum)
-            return true
-        }
-        return false
-    }
-
-    
-    public getSequenceNumber(peer: string) : number | undefined{
-        return this.executedSequenceNumbers.get(peer)
-    }
-
-    public printTokenData() {
-        console.log("************** TOKEN *************")
-        console.log("Token queue size : " , this.tokenQ.size())
-        console.log("Token sequence numbers map : ")
-        this.executedSequenceNumbers.forEach(element => {
-            console.log(element)
-        });
-        console.log("*******************************")
-        console.log("")
-    }
-
-}   
- 
-
+    console.info(`Token sequence numbers map : ${seqNumbers.join(" ")}`);
+    console.info("------------------------------------");
+  }
+}
