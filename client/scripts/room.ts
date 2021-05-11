@@ -331,7 +331,7 @@ class Room {
     conn: Peer.DataConnection
   ) => (): void => {
     this.dataConnections.set(peerId, conn);
-    // this.sendPeerData(peerId, "hello world!");
+    this.sendPeerData(peerId, "hello world!");
 
   };
 
