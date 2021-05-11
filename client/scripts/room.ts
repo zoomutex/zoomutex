@@ -24,7 +24,7 @@ class Room {
   private isSpeaking = false
   private isInitialise = false
   private mutex: Mutex | null = null;
-  private initilizationIndex: number = -1
+  private initilizationIndex = -1
   private isreleased = false
 
   private constructor(roomId: string, userStream: MediaStream) {
@@ -45,13 +45,13 @@ class Room {
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
     //  button to simulate a fake speaking event
-    let fakeSpeechButton = document.getElementById("fakeSpeech") as HTMLButtonElement
+    const fakeSpeechButton = document.getElementById("fakeSpeech") as HTMLButtonElement
     if (fakeSpeechButton === null) {
       throw new Error("Button element was unexpectedly null");
     }
     fakeSpeechButton.onclick = this.flipSpeaking
 
-    let magicButton = document.getElementById("startMutex") as HTMLButtonElement //  button to simulate a fake speaking event
+    const magicButton = document.getElementById("startMutex") as HTMLButtonElement //  button to simulate a fake speaking event
     if (magicButton === null) {
       throw new Error("Button element was unexpectedly null");
     }
@@ -65,7 +65,7 @@ class Room {
       }
       if (!this.isInitialise) {
 
-        let requestMessage: MutexMessage = {
+        const requestMessage: MutexMessage = {
           type: "startCall",
           message: JSON.stringify([this.peer.id, ...this.userStreams])
         }
@@ -261,7 +261,7 @@ class Room {
           }
           const rni = parseInt(requestMessage.message)
           console.info("TOKEN REQUEST from client ", peerId, " with SEQUENCE number ", rni)
-          let itokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
+          const itokenToSend = this.mutex?.compareSequenceNumber(peerId, rni)
           if (itokenToSend !== undefined) {
             const msg: MutexMessage = {
               type: "response",
@@ -285,10 +285,10 @@ class Room {
         }
         setTimeout(() => {
           if (!this.isSpeaking){
-            let nextPeerId = this.mutex?.nextPeer()
+            const nextPeerId = this.mutex?.nextPeer()
             if (nextPeerId !== undefined){
               console.info("Sending token to next peer in queue - ", nextPeerId)
-              let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
+              const itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
               if (itokenToSend !== undefined) {
                 const msg: MutexMessage = {
                   type: "response",
@@ -384,7 +384,7 @@ console.info("added media stream to window")
   // use button as a toggle switch to provide speaking access
   private flipSpeaking = (): void => {
     
-    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+    const fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
     if (fakeSpeechDisplay === null) {
       throw new Error("Fake status message element was unexpectedly null");
     }
@@ -406,7 +406,7 @@ console.info("added media stream to window")
     // do we send another request and add duplicates to the queue?
     // or do we not send a request incase we have an outstanding request? 
     if (!this.mutex?.doIhaveToken() && this.peer !== undefined) {
-      let requestMessage: MutexMessage = {
+      const requestMessage: MutexMessage = {
         type: "request", // "tokenRequest",
         message: JSON.stringify(this.mutex?.accessCriticalSection(this.peer?.id))
       }
@@ -431,10 +431,10 @@ console.info("added media stream to window")
       if (this.peer !== undefined) {
         console.info("Stopped speaking, Releasing critical section")
 
-        let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
+        const nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
         if (nextPeerId !== undefined){
           console.info("Sending token to next peer in queue - ", nextPeerId)
-          let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
+          const itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
           if (itokenToSend !== undefined) {
             const msg: MutexMessage = {
               type: "response",

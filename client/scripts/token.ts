@@ -13,7 +13,7 @@ class TokenQueue implements ITokenQueue {
 
     constructor(numPeers : number){
         this.queueSize = numPeers
-        this.queue = new Array()
+        this.queue = []
     }
     // Enque an object to the queue
     enq(object: string): boolean {
@@ -31,7 +31,7 @@ class TokenQueue implements ITokenQueue {
         return this.queue.length
     }
     isElement(object: string): boolean{
-        for (let el in this.queue){
+        for (const el in this.queue){
             if (JSON.stringify(this.queue[el]) === JSON.stringify(object)){
                 return true
             }
@@ -101,7 +101,7 @@ export default class Token {
     }
 
     public updateSequenceNumber(peer: string, sqncNum: number) :boolean {
-        let currentSequenceNumber = this.executedSequenceNumbers.get(peer)
+        const currentSequenceNumber = this.executedSequenceNumbers.get(peer)
         if (currentSequenceNumber !== undefined){
             this.executedSequenceNumbers.set(peer, sqncNum)
             return true
