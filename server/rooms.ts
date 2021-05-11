@@ -56,7 +56,7 @@ export default class Rooms {
       return;
     }
 
-    let peers = this.rooms.get(roomId);
+    const peers = this.rooms.get(roomId);
     if (peers === undefined) {
       return;
     }
