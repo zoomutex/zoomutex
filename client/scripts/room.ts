@@ -284,6 +284,7 @@ class Room {
   private onRequest = (peerId: string, requestMsg: MutexMessage): void => {
     if (this.mutex?.doIHaveToken() === false) {
       this.mutex?.updateSequenceNumber(peerId, parseInt(requestMsg.message));
+      return;
     }
 
     if (this.isSpeaking) {

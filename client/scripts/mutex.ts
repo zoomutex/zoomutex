@@ -125,8 +125,7 @@ export default class Mutex {
       console.info("Popping token queue - ", this.token.printTokenData());
       nextTokenPeer = this.token.popFromQueue();
       console.info(
-        "After poppinng token queue - ",
-        this.token.printTokenData()
+        `After popping token queue - ${this.token.printTokenData()}`
       );
     }
 
