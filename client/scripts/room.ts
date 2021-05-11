@@ -465,7 +465,7 @@ class Room {
     }
 
     console.log("Do I have the token? - ", this.mutex?.doIHaveToken());
-    if (this.mutex === undefined) {
+    if (this.mutex === null) {
       speechStatus.innerText = "Token not initialised";
       return;
     }
