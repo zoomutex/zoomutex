@@ -350,7 +350,7 @@ class Room {
     // If user is trying to speak, we continue as normal
     // If not, we wait a timeout before sending the token to next peer
     setTimeout(() => {
-      if (this.isSpeaking) {
+      if (!this.isSpeaking) {
         let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id);
 
         if (nextPeerId !== undefined) {
@@ -517,7 +517,7 @@ class Room {
     console.log("Stopped speaking");
 
     setTimeout(() => {
-      if (this.peer !== undefined) {
+      if (this.peer !== null) {
         const speechStatus = document.getElementById("speakStatus");
         if (speechStatus === null) {
           throw new Error("Fake status message element was unexpectedly null");
