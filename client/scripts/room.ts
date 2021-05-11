@@ -24,8 +24,8 @@ class Room {
   private isSpeaking = false
   private isInitialise = false
   private mutex: Mutex | null = null;
+  private initilizationIndex: number = -1
   private isreleased = false
-  private isRequested = false
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
@@ -41,7 +41,6 @@ class Room {
     // not from npm.
     // @ts-ignore
     this.speechEvents = hark(this.userStream, {});
-    this.speechEvents.setThreshold(-40)
     this.speechEvents.on("speaking", this.onSpeaking);
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
@@ -135,7 +134,10 @@ class Room {
     this.connectToDataPeers(data);
     this.callPeers(data);
 
-
+    this.initilizationIndex = data.length - 1
+    //if (data.length == 0){
+      //this.godPerson = this.peer?.id!
+    //}
   };
 
   /**
@@ -160,7 +162,7 @@ class Room {
    * Event handler for when we receive a call.
    * @param call The media connection we are receiving.
    */
-  private  onPeerCall = (call: Peer.MediaConnection): void => {
+  private onPeerCall = (call: Peer.MediaConnection): void => {
     //console.log(`answering call from ${call.peer}`);
     call.answer(this.userStream);
     call.on("stream", this.onCallStream(call.peer));
@@ -244,7 +246,7 @@ class Room {
 
   private onPeerDataReceive = (peerId: string) => (data: any): void => {
     
-    console.log(`received data '${data}' from ${peerId}`);
+    //console.log(`received data '${data}' from ${peerId}`);
     console.info("Received a mutex message from peer")
 
     const requestMessage: MutexMessage = JSON.parse(data)
@@ -281,22 +283,9 @@ class Room {
         if (token !== undefined && this.mutex !== undefined) {
           this.mutex?.setTokenObject(token)
         }
-
-        let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-        if (fakeSpeechDisplay === null) {
-          throw new Error("Fake status message element was unexpectedly null");
-        }
-        fakeSpeechDisplay.innerHTML = "Received token, 3 seconds to speak before token is potentially passed to next in queue"
-        this.isRequested = false
-
-        // Due to token being passed based on queue order, if I receive the token at a time I do not wish to speak, 
-        // I will have to execute CS once before I can release the token to next peer in queue. (due to how algo works)
-        // We can add a check to see if user is trying to speak or not. 
-        // If user is trying to speak, we continue as normal
-        // If not, we wait a timeout before sending the token to next peer
         setTimeout(() => {
-          if (!this.isSpeaking){ 
-            let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
+          if (!this.isSpeaking){
+            let nextPeerId = this.mutex?.nextPeer()
             if (nextPeerId !== undefined){
               console.info("Sending token to next peer in queue - ", nextPeerId)
               let itokenToSend = this.mutex?.getTokenObjectToSendToPeer()
@@ -306,15 +295,11 @@ class Room {
                   message: JSON.stringify(itokenToSend)
                 }
                 console.info("Token to send is ", itokenToSend)
-                fakeSpeechDisplay.innerHTML = "Token sent.."
-                this.sendPeerData(nextPeerId, JSON.stringify(msg))
+                this.sendPeerData(this.peer?.id!, JSON.stringify(msg))
               }
-            }else{
-              console.info("No peers in token's queue. Token stays with me")
             }
-            this.isreleased = true //we set if to false when we are speaking
           }
-        }, 3000);
+        }, 1000);
         return
       }
       case "startCall": {
@@ -338,7 +323,8 @@ class Room {
     conn: Peer.DataConnection
   ) => (): void => {
     this.dataConnections.set(peerId, conn);
-    //this.sendPeerData(peerId, "hello world!");
+    // this.sendPeerData(peerId, "hello world!");
+
   };
 
   private onPeerDataError = (peerId: string) => (err: any): void => {
@@ -384,7 +370,7 @@ class Room {
       videoEl.id = "user";
       videoEl.muted = true;
     }
-    console.info("added media stream to window")
+console.info("added media stream to window")
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
@@ -398,49 +384,28 @@ class Room {
   // use button as a toggle switch to provide speaking access
   private flipSpeaking = (): void => {
     
-      let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-      if (fakeSpeechDisplay === null) {
-        throw new Error("Fake status message element was unexpectedly null");
-      }
+    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+    if (fakeSpeechDisplay === null) {
+      throw new Error("Fake status message element was unexpectedly null");
+    }
     if (this.isSpeaking) {
       this.onStoppedSpeaking()
-      //fakeSpeechDisplay.innerHTML = "Stopped speaking!"
+      fakeSpeechDisplay.innerHTML = "Stopped speaking!"
     } else {
       this.onSpeaking()
-      //fakeSpeechDisplay.innerHTML = "Now speaking..."
+      fakeSpeechDisplay.innerHTML = "Now speaking..."
     }
     this.isSpeaking = !this.isSpeaking
   }
 
   private onSpeaking = async (): Promise<void> => {
-
     console.log("Do I have the token? - " , this.mutex?.doIhaveToken())
-    if (this.mutex === undefined){
-         
-      let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-      if (fakeSpeechDisplay === null) {
-        console.log("wtf")
-        throw new Error("Fake status message element was unexpectedly null");
-      }
-      fakeSpeechDisplay.innerHTML = "Token not initialised"
-      return
-    }
 
     // incase we do not have the token, we end up sending a request message everytime we speak 
     // if we previously sent a request which has not been responded to (i.e its in the token's queue), 
     // do we send another request and add duplicates to the queue?
     // or do we not send a request incase we have an outstanding request? 
     if (!this.mutex?.doIhaveToken() && this.peer !== undefined) {
-      if (this.isRequested){
-        // already sent a token request, awaiting response before sending next request
-        let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-        if (fakeSpeechDisplay === null) {
-          console.log("wtf")
-          throw new Error("Fake status message element was unexpectedly null");
-        }
-        fakeSpeechDisplay.innerHTML = "Waiting for token response before speaking"
-        return
-      }
       let requestMessage: MutexMessage = {
         type: "request", // "tokenRequest",
         message: JSON.stringify(this.mutex?.accessCriticalSection(this.peer?.id))
@@ -448,51 +413,24 @@ class Room {
       this.userStreams.forEach(peer => {
         this.sendPeerData(peer, JSON.stringify(requestMessage))
       })
-      this.isRequested = true // set false after receiving response
       console.info("Token request sent to all peers, waiting my turn....")
-
-      let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-      if (fakeSpeechDisplay === null) {
-        console.log("wtf")
-        throw new Error("Fake status message element was unexpectedly null");
-      }
-      fakeSpeechDisplay.innerHTML = "No Token, request sent to all peers, waiting my turn...."
-
       return
     }
-    
     this.isreleased = false // we set it to true when stop speaking
-
     console.info("I have the power to speak");
-    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-    if (fakeSpeechDisplay === null) {
-      console.log("wtf")
-      throw new Error("Fake status message element was unexpectedly null");
-    }
-    fakeSpeechDisplay.innerHTML = "I have the token, I am speaking..."
-
   };
   
   private onStoppedSpeaking = (): void => {
-
-
     // this check prevents repeated calls to mutex.releaseCriticalSection
     if (this.isreleased){ 
       console.log("I have already released CS and sent token, " + 
        "this method is called automatically by 'hark' whenever your audio signals a stopped-speech event")
       return
     }
-    console.log("Stopped speaking")
-
-
     setTimeout(() => {
       if (this.peer !== undefined) {
-        let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-        if (fakeSpeechDisplay === null) {
-          throw new Error("Fake status message element was unexpectedly null");
-        }
         console.info("Stopped speaking, Releasing critical section")
-        
+
         let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
         if (nextPeerId !== undefined){
           console.info("Sending token to next peer in queue - ", nextPeerId)
@@ -503,16 +441,14 @@ class Room {
               message: JSON.stringify(itokenToSend)
             }
             console.info("Token to send is ", itokenToSend)
-            this.sendPeerData(nextPeerId, JSON.stringify(msg))
+            this.sendPeerData(this.peer?.id!, JSON.stringify(msg))
           }
         }else{
           console.info("No peers in token's queue. Token stays with me")
         }
-        fakeSpeechDisplay.innerHTML = "Stopped speaking!"
         this.isreleased = true //we set if to false when we are speaking
       }
     }, 1000);
-    
   };
 
   /**
@@ -523,7 +459,6 @@ class Room {
     this.audioTrack.enabled = !(isMuted !== undefined
       ? isMuted
       : !this.audioTrack.enabled);
-      
   };
 
   /**
