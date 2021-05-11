@@ -84,9 +84,6 @@ class Room {
           message: ""
         }
         this.sendPeerDataToAll(JSON.stringify(unMuteMessage))
-
-
-
       }
     }
 
@@ -168,7 +165,7 @@ class Room {
    * Event handler for when we receive a call.
    * @param call The media connection we are receiving.
    */
-  private  onPeerCall = (call: Peer.MediaConnection): void => {
+  private onPeerCall = (call: Peer.MediaConnection): void => {
     //console.log(`answering call from ${call.peer}`);
     call.answer(this.userStream);
     call.on("stream", this.onCallStream(call.peer));
@@ -261,9 +258,12 @@ class Room {
       case "unMute" : {
         this.domVideos.forEach(element => {
           element.muted = true
+          console.info("Muting all peers") 
         });
         const dom = this.domVideos.get(peerId)!
         dom.muted = false
+        console.info("Unmuted - ", peerId)
+        return
       }
 
 
@@ -478,7 +478,6 @@ class Room {
         throw new Error("Fake status message element was unexpectedly null");
       }
       fakeSpeechDisplay.innerHTML = "No Token, request sent to all peers, waiting my turn...."
-
       return
     }
     
@@ -491,11 +490,9 @@ class Room {
       throw new Error("Fake status message element was unexpectedly null");
     }
     fakeSpeechDisplay.innerHTML = "I have the token, I am speaking..."
-
   };
   
   private onStoppedSpeaking = (): void => {
-
 
     // this check prevents repeated calls to mutex.releaseCriticalSection
     if (this.isreleased){ 
@@ -504,7 +501,6 @@ class Room {
       return
     }
     console.log("Stopped speaking")
-
 
     setTimeout(() => {
       if (this.peer !== undefined) {
