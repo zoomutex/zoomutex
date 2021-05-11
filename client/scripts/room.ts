@@ -95,8 +95,7 @@ class Room {
     }
     this.videosRef = videosRef as HTMLVideoElement;
 
-    // Add the user's own media stream to the DOM
-    this.addMediaStreamToDOM(userStream, this.peer?.id!);
+ 
 
     // The following ts-ignore is necessary because we are importing from a CDN,
     // not from npm.
@@ -124,6 +123,10 @@ class Room {
    * not exist - as the client, we don't really care).
    */
   private onPeerOpen = async (): Promise<void> => {
+
+    // Add the user's own media stream to the DOM
+    this.addMediaStreamToDOM(this.userStream, this.peer?.id!);
+    
     console.log(`userId: ${this.peer?.id}`);
     const body = JSON.stringify({ userId: this.peer?.id });
 
