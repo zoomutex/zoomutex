@@ -281,6 +281,11 @@ class Room {
           this.mutex?.setTokenObject(token)
         }
 
+        let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+        if (fakeSpeechDisplay === null) {
+          throw new Error("Fake status message element was unexpectedly null");
+        }
+        fakeSpeechDisplay.innerHTML = "Received token, 3 seconds to speak before token is potentially passed to next in queue"
         this.isRequested = false
 
         // Due to token being passed based on queue order, if I receive the token at a time I do not wish to speak, 
@@ -300,6 +305,7 @@ class Room {
                   message: JSON.stringify(itokenToSend)
                 }
                 console.info("Token to send is ", itokenToSend)
+                fakeSpeechDisplay.innerHTML = "Token sent.."
                 this.sendPeerData(nextPeerId, JSON.stringify(msg))
               }
             }else{
@@ -391,16 +397,16 @@ class Room {
   // use button as a toggle switch to provide speaking access
   private flipSpeaking = (): void => {
     
-    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-    if (fakeSpeechDisplay === null) {
-      throw new Error("Fake status message element was unexpectedly null");
-    }
+      let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+      if (fakeSpeechDisplay === null) {
+        throw new Error("Fake status message element was unexpectedly null");
+      }
     if (this.isSpeaking) {
       this.onStoppedSpeaking()
-      fakeSpeechDisplay.innerHTML = "Stopped speaking!"
+      //fakeSpeechDisplay.innerHTML = "Stopped speaking!"
     } else {
       this.onSpeaking()
-      fakeSpeechDisplay.innerHTML = "Now speaking..."
+      //fakeSpeechDisplay.innerHTML = "Now speaking..."
     }
     this.isSpeaking = !this.isSpeaking
   }
@@ -409,6 +415,11 @@ class Room {
     console.log("Do I have the token? - " , this.mutex?.doIhaveToken())
     if (this.mutex === undefined){
       return
+    }
+
+    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+    if (fakeSpeechDisplay === null) {
+      throw new Error("Fake status message element was unexpectedly null");
     }
     // incase we do not have the token, we end up sending a request message everytime we speak 
     // if we previously sent a request which has not been responded to (i.e its in the token's queue), 
@@ -428,14 +439,28 @@ class Room {
       })
       this.isRequested = true // set false after receiving response
       console.info("Token request sent to all peers, waiting my turn....")
+
+     
+      fakeSpeechDisplay.innerHTML = "No Token, request sent to all peers, waiting my turn...."
+
+
       return
     }
     this.isreleased = false // we set it to true when stop speaking
     this.toggleMuted(false) // unmute the user stream -> audioTrack.enabled = true
     console.info("I have the power to speak");
+    fakeSpeechDisplay.innerHTML = "I have the token, I am speaking..."
+
   };
   
   private onStoppedSpeaking = (): void => {
+
+
+    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+    if (fakeSpeechDisplay === null) {
+      throw new Error("Fake status message element was unexpectedly null");
+    }
+
     // this check prevents repeated calls to mutex.releaseCriticalSection
     if (this.isreleased){ 
       console.log("I have already released CS and sent token, " + 
@@ -444,6 +469,9 @@ class Room {
     }
     setTimeout(() => {
       if (this.peer !== undefined) {
+        
+
+
         console.info("Stopped speaking, Releasing critical section")
         
         this.toggleMuted(true) // mute the user stream  -> audioTrack.enabled = false
@@ -463,6 +491,7 @@ class Room {
         }else{
           console.info("No peers in token's queue. Token stays with me")
         }
+        fakeSpeechDisplay.innerHTML = "Stopped speaking!"
         this.isreleased = true //we set if to false when we are speaking
       }
     }, 1000);
