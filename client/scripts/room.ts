@@ -243,7 +243,7 @@ class Room {
 
   private onPeerDataReceive = (peerId: string) => (data: any): void => {
     
-    //console.log(`received data '${data}' from ${peerId}`);
+    console.log(`received data '${data}' from ${peerId}`);
     console.info("Received a mutex message from peer")
 
     const requestMessage: MutexMessage = JSON.parse(data)
@@ -331,8 +331,7 @@ class Room {
     conn: Peer.DataConnection
   ) => (): void => {
     this.dataConnections.set(peerId, conn);
-    this.sendPeerData(peerId, "hello world!");
-
+    //this.sendPeerData(peerId, "hello world!");
   };
 
   private onPeerDataError = (peerId: string) => (err: any): void => {
@@ -378,7 +377,7 @@ class Room {
       videoEl.id = "user";
       videoEl.muted = true;
     }
-console.info("added media stream to window")
+    console.info("added media stream to window")
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
     videoEl.playsInline = true;
@@ -408,7 +407,9 @@ console.info("added media stream to window")
 
   private onSpeaking = async (): Promise<void> => {
     console.log("Do I have the token? - " , this.mutex?.doIhaveToken())
-
+    if (this.mutex === undefined){
+      return
+    }
     // incase we do not have the token, we end up sending a request message everytime we speak 
     // if we previously sent a request which has not been responded to (i.e its in the token's queue), 
     // do we send another request and add duplicates to the queue?
