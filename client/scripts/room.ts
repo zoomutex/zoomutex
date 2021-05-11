@@ -79,6 +79,14 @@ class Room {
 
         this.isInitialise = true
         
+        let unMuteMessage: MutexMessage = {
+          type: "unMute",
+          message: ""
+        }
+        this.sendPeerDataToAll(JSON.stringify(unMuteMessage))
+
+
+
       }
     }
 
