@@ -24,8 +24,8 @@ class Room {
   private isSpeaking = false
   private isInitialise = false
   private mutex: Mutex | null = null;
-  private initilizationIndex: number = -1
   private isreleased = false
+  private isRequested = false
 
   private constructor(roomId: string, userStream: MediaStream) {
     this.roomId = roomId;
@@ -134,10 +134,7 @@ class Room {
     this.connectToDataPeers(data);
     this.callPeers(data);
 
-    this.initilizationIndex = data.length - 1
-    //if (data.length == 0){
-      //this.godPerson = this.peer?.id!
-    //}
+
   };
 
   /**
@@ -162,7 +159,7 @@ class Room {
    * Event handler for when we receive a call.
    * @param call The media connection we are receiving.
    */
-  private onPeerCall = (call: Peer.MediaConnection): void => {
+  private  onPeerCall = (call: Peer.MediaConnection): void => {
     //console.log(`answering call from ${call.peer}`);
     call.answer(this.userStream);
     call.on("stream", this.onCallStream(call.peer));
@@ -283,6 +280,9 @@ class Room {
         if (token !== undefined && this.mutex !== undefined) {
           this.mutex?.setTokenObject(token)
         }
+
+        this.isRequested = false
+
         // Due to token being passed based on queue order, if I receive the token at a time I do not wish to speak, 
         // I will have to execute CS once before I can release the token to next peer in queue. (due to how algo works)
         // We can add a check to see if user is trying to speak or not. 
@@ -414,6 +414,10 @@ console.info("added media stream to window")
     // do we send another request and add duplicates to the queue?
     // or do we not send a request incase we have an outstanding request? 
     if (!this.mutex?.doIhaveToken() && this.peer !== undefined) {
+      if (this.isRequested){
+        // already sent a token request, awaiting response before sending next request
+        return
+      }
       let requestMessage: MutexMessage = {
         type: "request", // "tokenRequest",
         message: JSON.stringify(this.mutex?.accessCriticalSection(this.peer?.id))
@@ -421,10 +425,12 @@ console.info("added media stream to window")
       this.userStreams.forEach(peer => {
         this.sendPeerData(peer, JSON.stringify(requestMessage))
       })
+      this.isRequested = true // set false after receiving response
       console.info("Token request sent to all peers, waiting my turn....")
       return
     }
     this.isreleased = false // we set it to true when stop speaking
+    this.toggleMuted(false) // unmute the user stream -> audioTrack.enabled = true
     console.info("I have the power to speak");
   };
   
@@ -438,6 +444,8 @@ console.info("added media stream to window")
     setTimeout(() => {
       if (this.peer !== undefined) {
         console.info("Stopped speaking, Releasing critical section")
+        
+        this.toggleMuted(true) // mute the user stream  -> audioTrack.enabled = false
 
         let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
         if (nextPeerId !== undefined){
@@ -467,6 +475,7 @@ console.info("added media stream to window")
     this.audioTrack.enabled = !(isMuted !== undefined
       ? isMuted
       : !this.audioTrack.enabled);
+      
   };
 
   /**
