@@ -79,6 +79,12 @@ class Room {
 
         this.isInitialise = true
         
+        this.domVideos.forEach((k,v) => {
+          const userVideo = document.getElementById(v) as HTMLVideoElement
+          console.info("Muting all peers") 
+          userVideo.muted = true
+        })
+        
         let unMuteMessage: MutexMessage = {
           type: "unMute",
           message: ""
@@ -269,15 +275,6 @@ class Room {
         tokenUserVideo.muted = false
         console.info("Unmuted - ", peerId)
 
-
-      /*  this.domVideos.forEach(element => {
-          element.muted = true
-          console.info("Muting all peers") 
-        });
-        const dom = this.domVideos.get(peerId)!
-        dom.muted = false
-        console.info("Unmuted - ", peerId)
-        */
         return
       }
 
@@ -314,6 +311,12 @@ class Room {
         if (token !== undefined && this.mutex !== undefined) {
           this.mutex?.setTokenObject(token)
         }
+        this.domVideos.forEach((k,v) => {
+          const userVideo = document.getElementById(v) as HTMLVideoElement
+          console.info("Muting all peers") 
+          userVideo.muted = true
+        })
+        
         const msg: MutexMessage = {
           type: "unMute",
           message: ""
