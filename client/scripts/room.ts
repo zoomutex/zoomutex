@@ -307,7 +307,7 @@ class Room {
             }
             this.isreleased = true //we set if to false when we are speaking
           }
-        }, 1000);
+        }, 3000);
         return
       }
       case "startCall": {
