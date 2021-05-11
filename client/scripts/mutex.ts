@@ -14,10 +14,10 @@ export default class Mutex {
     // on initialisation, we delegate the token to the first peer in the array
     // every other peer will have an empty token
     if (self === peers[0]) {
-      console.log("This user has the token");
+      //console.log("This user has the token");
       this.token = new Token(peers);
     } else {
-      console.log("This user does not have the token");
+      //console.log("This user does not have the token");
       this.token = new Token([]);
     }
 
@@ -70,7 +70,6 @@ export default class Mutex {
    */
   public removeToken() {
     console.info("I no longer have the token");
-    // Sets this.token.peerCount = 0
     this.token = new Token([]);
   }
 
@@ -122,11 +121,11 @@ export default class Mutex {
     // if the Queue Q is non-empty, it pops a site ID from the Q and sends
     // the token to site indicated by popped ID
     if (this.token.queueSize() >= 0) {
-      console.info("Popping token queue - ", this.token.printTokenData());
+     // console.info("Popping token queue - ", this.token.printTokenData());
       nextTokenPeer = this.token.popFromQueue();
-      console.info(
-        `After popping token queue - ${this.token.printTokenData()}`
-      );
+     // console.info(
+       // `After popping token queue - ${this.token.printTokenData()}`
+      //);
     }
 
     // else, we keep the token with this client
@@ -135,26 +134,24 @@ export default class Mutex {
 
   public nextPeer(): PeerId | undefined {
     if (this.token.queueSize() >= 0) {
-      console.info(`Popping token queue - ${this.token.printTokenData()}`);
+     // console.info(`Popping token queue - ${this.token.printTokenData()}`);
       let nextTokenPeer = this.token.popFromQueue();
-      console.info(
-        `After popping token queue - ${this.token.printTokenData()}`
-      );
+      
       return nextTokenPeer;
     }
   }
 
   public printMutexObject() {
-    console.info("************* MUTEX OBJECT ****************");
+   // console.info("************* MUTEX OBJECT ****************");
     const seqNumbers: number[] = [];
     this.requestSequenceNumbers.forEach((e) => {
       seqNumbers.push(e);
     });
 
-    console.info(`Local request sequence numbers ${seqNumbers.join(" ")}`);
+    //console.info(`Local request sequence numbers ${seqNumbers.join(" ")}`);
 
     this.token.printTokenData();
-    console.info("*******************************************");
+    //console.info("*******************************************");
   }
 
   /**
@@ -171,10 +168,9 @@ export default class Mutex {
     if (rni !== undefined) {
       rni = rni + 1;
       this.requestSequenceNumbers.set(peer, rni);
-      console.info(`Sending request with sequence number - ${rni}`);
+     // console.info(`Sending request with sequence number - ${rni}`);
       return rni;
     }
-    console.log("returning -1");
     return -1;
   }
 
@@ -201,14 +197,11 @@ export default class Mutex {
     peerId: PeerId,
     seqNum: number
   ): IToken | undefined {
-    console.info(`number in request - ${seqNum}`);
+    //console.info(`number in request - ${seqNum}`);
     let localSequenceNumber = this.requestSequenceNumbers.get(peerId);
 
-    console.info(
-      `Before comparing: local request array ${localSequenceNumber}`
-    );
+   
     let currentExecutionNum = this.token.getSequenceNumber(peerId);
-    console.log(`Before comparing: currentExecutionNum ${currentExecutionNum}`);
 
     if (localSequenceNumber === undefined) {
       console.error(`Could not find localSequenceNumber for peer ${peerId}`);
@@ -230,7 +223,6 @@ export default class Mutex {
     // localSequenceNumber < seqNum
     // updating own local request array
     this.requestSequenceNumbers.set(peerId, seqNum);
-    //console.log("After condition: local request array "+this.requestSequenceNumbers.get(peer));
 
     //Checking the second condition RNj[i] = LN[i] + 1
     if (this.requestSequenceNumbers.get(peerId) === currentExecutionNum + 1) {

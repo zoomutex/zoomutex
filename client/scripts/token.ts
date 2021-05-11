@@ -141,15 +141,9 @@ export default class Token {
   }
 
   public printTokenData() {
-    console.info("-------------- TOKEN --------------");
-    console.info("Token queue size : ", this.queue.size());
-
     const seqNumbers: number[] = [];
     this.executedSequenceNumbers.forEach((element) => {
       seqNumbers.push(element);
     });
-
-    console.info(`Token sequence numbers map : ${seqNumbers.join(" ")}`);
-    console.info("------------------------------------");
   }
 }
