@@ -2,7 +2,7 @@
 
 We have implemented Suzuki Kasami’s Mutual Exclusion algorithm’s as a way to prevent two or more people from talking over one another in a video call. 
 
-## Implementation Detials
+## Implementation Details
 
 Please find the algorithm implemented in the following files
 ```shell
@@ -19,3 +19,16 @@ Holds the girth of the algorithm, it will makes use of token.ts for it’s data 
 client/scripts/token.ts
 ```
 Data structures for the Suzuki Kasami algorithm
+
+
+## Local Build
+
+```shell
+npm run dev:server
+```
+Run server in development mode
+
+```shell
+npm run dev:client
+```
+Live compile typescript files.
