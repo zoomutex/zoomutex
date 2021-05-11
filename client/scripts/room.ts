@@ -39,7 +39,7 @@ class Room {
     // not from npm.
     // @ts-ignore
     this.speechEvents = hark(this.userStream, {});
-    this.speechEvents.setThreshold(-40);
+    this.speechEvents.setThreshold(-30);
     this.speechEvents.on("speaking", this.onSpeaking);
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
