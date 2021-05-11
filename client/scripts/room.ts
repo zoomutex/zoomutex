@@ -256,13 +256,22 @@ class Room {
     switch (requestMessage.type) {
       
       case "unMute" : {
-        this.domVideos.forEach(element => {
+
+        this.domVideos.forEach((k,v) => {
+          const userVideo = document.getElementById(v) as HTMLVideoElement
+          userVideo.muted = true
+        })
+        const tokenUserVideo = document.getElementById(peerId) as HTMLVideoElement
+        tokenUserVideo.muted = false
+
+      /*  this.domVideos.forEach(element => {
           element.muted = true
           console.info("Muting all peers") 
         });
         const dom = this.domVideos.get(peerId)!
         dom.muted = false
         console.info("Unmuted - ", peerId)
+        */
         return
       }
 
