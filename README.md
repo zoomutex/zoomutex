@@ -1,64 +1,21 @@
-# Zoomutex
+# ZOOMUTEX
 
-## Client Sandbox
+We have implemented Suzuki Kasami’s Mutual Exclusion algorithm’s as a way to prevent two or more people from talking over one another in a video call. 
+
+## Implementation Detials
+
+Please find the algorithm implemented in the following files
+```shell
+client/scripts/room.ts
+```
+This is the main function to create a room, connect and disconnect peers' audio and video. Room.ts makes use of Suzukasa.ts and token.ts to ensure Mutual Exclusion between peers.
 
 ```shell
-npm run client:sandbox
+client/Scripts/mutex.ts
 ```
-
-## Development
-
-Set up server env:
-
-```txt
-# server/.env
-PORT=7000
-```
-
-Start running the server:
+Holds the girth of the algorithm, it will makes use of token.ts for it’s data structures
 
 ```shell
-npm run dev:server
+client/scripts/token.ts
 ```
-
-Start compiling the client in watch mode:
-
-```shell
-npm run dev:client
-```
-
-## Building
-
-Build the application:
-
-```shell
-npm run build
-```
-
-Run the application in production:
-
-```shell
-npm run start
-```
-
-## Deploy
-
-To deploy, run `deploy.sh`:
-
-```shell
-./deploy.sh <target-dir> <commit-message>
-```
-
-For example, if your folder structure looks like:
-
-```
-.
-├── zoomutex
-└── zoomutex-heroku
-```
-
-you can run
-
-```shell
-./deploy.sh ../zoomutex-heroku "fresh deploy"
-```
+Data structures for the Suzuki Kasami algorithm
