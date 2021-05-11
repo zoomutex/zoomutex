@@ -5,7 +5,7 @@ import type Peer from "peerjs";
 import type hark from "hark";
 
 interface MutexMessage {
-  type: "request" | "response" | "startCall" 
+  type: "request" | "response" | "startCall" | "unMute"
   message: string
 }
 
@@ -91,7 +91,7 @@ class Room {
     this.videosRef = videosRef as HTMLVideoElement;
 
     // Add the user's own media stream to the DOM
-    this.addMediaStreamToDOM(userStream);
+    this.addMediaStreamToDOM(userStream, this.peer?.id!);
 
     // The following ts-ignore is necessary because we are importing from a CDN,
     // not from npm.
@@ -249,6 +249,16 @@ class Room {
 
     const requestMessage: MutexMessage = JSON.parse(data)
     switch (requestMessage.type) {
+      
+      case "unMute" : {
+        this.domVideos.forEach(element => {
+          element.muted = true
+        });
+        const dom = this.domVideos.get(peerId)!
+        dom.muted = false
+      }
+
+
       case "request": {
         if(this.mutex?.doIhaveToken()){
           if (this.isSpeaking) {
@@ -281,7 +291,12 @@ class Room {
         if (token !== undefined && this.mutex !== undefined) {
           this.mutex?.setTokenObject(token)
         }
-
+        const msg: MutexMessage = {
+          type: "unMute",
+          message: ""
+        }
+        this.sendPeerDataToAll(JSON.stringify(msg))
+        
         let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
         if (fakeSpeechDisplay === null) {
           throw new Error("Fake status message element was unexpectedly null");
@@ -376,14 +391,12 @@ class Room {
    */
   private addMediaStreamToDOM = (
     stream: MediaStream,
-    peerId?: string
+    peerId: string
   ): void => {
     const videoEl = document.createElement("video");
-    if (peerId === undefined) {
-      // it's the user
-      videoEl.id = "user";
-      videoEl.muted = true;
-    }
+    videoEl.id = peerId
+    videoEl.muted = true;
+
     console.info("added media stream to window")
     videoEl.srcObject = stream;
     videoEl.autoplay = true;
@@ -391,7 +404,7 @@ class Room {
     videoEl.height = 360;
     videoEl.width = 480;
 
-    this.domVideos.set("user", videoEl);
+    this.domVideos.set(peerId, videoEl);
     this.videosRef.appendChild(videoEl);
   };
 
