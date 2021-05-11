@@ -41,7 +41,7 @@ class Room {
     // not from npm.
     // @ts-ignore
     this.speechEvents = hark(this.userStream, {});
-    this.speechEvents.setThreshold(0)
+    this.speechEvents.setThreshold(-40)
     this.speechEvents.on("speaking", this.onSpeaking);
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
@@ -414,14 +414,14 @@ class Room {
 
   private onSpeaking = async (): Promise<void> => {
 
-
-    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-    if (fakeSpeechDisplay === null) {
-      throw new Error("Fake status message element was unexpectedly null");
-    }
-
     console.log("Do I have the token? - " , this.mutex?.doIhaveToken())
     if (this.mutex === undefined){
+         
+      let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+      if (fakeSpeechDisplay === null) {
+        console.log("wtf")
+        throw new Error("Fake status message element was unexpectedly null");
+      }
       fakeSpeechDisplay.innerHTML = "Token not initialised"
       return
     }
@@ -433,6 +433,11 @@ class Room {
     if (!this.mutex?.doIhaveToken() && this.peer !== undefined) {
       if (this.isRequested){
         // already sent a token request, awaiting response before sending next request
+        let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+        if (fakeSpeechDisplay === null) {
+          console.log("wtf")
+          throw new Error("Fake status message element was unexpectedly null");
+        }
         fakeSpeechDisplay.innerHTML = "Waiting for token response before speaking"
         return
       }
@@ -446,15 +451,24 @@ class Room {
       this.isRequested = true // set false after receiving response
       console.info("Token request sent to all peers, waiting my turn....")
 
-     
+      let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+      if (fakeSpeechDisplay === null) {
+        console.log("wtf")
+        throw new Error("Fake status message element was unexpectedly null");
+      }
       fakeSpeechDisplay.innerHTML = "No Token, request sent to all peers, waiting my turn...."
-
 
       return
     }
+    
     this.isreleased = false // we set it to true when stop speaking
-    this.toggleMuted(false) // unmute the user stream -> audioTrack.enabled = true
+
     console.info("I have the power to speak");
+    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+    if (fakeSpeechDisplay === null) {
+      console.log("wtf")
+      throw new Error("Fake status message element was unexpectedly null");
+    }
     fakeSpeechDisplay.innerHTML = "I have the token, I am speaking..."
 
   };
@@ -462,26 +476,23 @@ class Room {
   private onStoppedSpeaking = (): void => {
 
 
-    let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
-    if (fakeSpeechDisplay === null) {
-      throw new Error("Fake status message element was unexpectedly null");
-    }
-
     // this check prevents repeated calls to mutex.releaseCriticalSection
     if (this.isreleased){ 
       console.log("I have already released CS and sent token, " + 
        "this method is called automatically by 'hark' whenever your audio signals a stopped-speech event")
       return
     }
+    console.log("Stopped speaking")
+
+
     setTimeout(() => {
       if (this.peer !== undefined) {
-        
-
-
+        let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
+        if (fakeSpeechDisplay === null) {
+          throw new Error("Fake status message element was unexpectedly null");
+        }
         console.info("Stopped speaking, Releasing critical section")
         
-        this.toggleMuted(true) // mute the user stream  -> audioTrack.enabled = false
-
         let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id)
         if (nextPeerId !== undefined){
           console.info("Sending token to next peer in queue - ", nextPeerId)
@@ -501,6 +512,7 @@ class Room {
         this.isreleased = true //we set if to false when we are speaking
       }
     }, 1000);
+    
   };
 
   /**
