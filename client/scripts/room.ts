@@ -262,10 +262,13 @@ class Room {
 
         this.domVideos.forEach((k,v) => {
           const userVideo = document.getElementById(v) as HTMLVideoElement
+          console.info("Muting all peers") 
           userVideo.muted = true
         })
         const tokenUserVideo = document.getElementById(peerId) as HTMLVideoElement
         tokenUserVideo.muted = false
+        console.info("Unmuted - ", peerId)
+
 
       /*  this.domVideos.forEach(element => {
           element.muted = true
