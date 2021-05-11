@@ -41,7 +41,7 @@ class Room {
     // not from npm.
     // @ts-ignore
     this.speechEvents = hark(this.userStream, {});
-    this.speechEvents.setThreshold(-10)
+    this.speechEvents.setThreshold(0)
     this.speechEvents.on("speaking", this.onSpeaking);
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
@@ -413,15 +413,19 @@ class Room {
   }
 
   private onSpeaking = async (): Promise<void> => {
-    console.log("Do I have the token? - " , this.mutex?.doIhaveToken())
-    if (this.mutex === undefined){
-      return
-    }
+
 
     let fakeSpeechDisplay = document.getElementById("speakStatus") as HTMLParagraphElement
     if (fakeSpeechDisplay === null) {
       throw new Error("Fake status message element was unexpectedly null");
     }
+
+    console.log("Do I have the token? - " , this.mutex?.doIhaveToken())
+    if (this.mutex === undefined){
+      fakeSpeechDisplay.innerHTML = "Token not initialised"
+      return
+    }
+
     // incase we do not have the token, we end up sending a request message everytime we speak 
     // if we previously sent a request which has not been responded to (i.e its in the token's queue), 
     // do we send another request and add duplicates to the queue?
@@ -429,6 +433,7 @@ class Room {
     if (!this.mutex?.doIhaveToken() && this.peer !== undefined) {
       if (this.isRequested){
         // already sent a token request, awaiting response before sending next request
+        fakeSpeechDisplay.innerHTML = "Waiting for token response before speaking"
         return
       }
       let requestMessage: MutexMessage = {
