@@ -10,15 +10,17 @@
     <body onload="displayRoomId()">
         <div id="shareUrl">
             <h2 id="roomId"></h2>
+            <p>If you want to talk, start humming loudly</p>
         </div>
+
 
         <script src="../scripts/room.js" type="module"></script>
         <script src="https://www.unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
         <script src="https://unpkg.com/hark@1.2.3/hark.bundle.js"></script>
 
         <div id="buttonContainer">
-            <p id="speakStatus"></p>
-            <button id="startMutex" onclick="magic()">Create Token</button>
+            <p id="statusMsg"></p>
+            <button id="startMutex" onclick="magic()">Start Call</button>
         </div>
 
 

@@ -25,6 +25,7 @@ class Room {
   private readonly userStreams = new Set<string>();
   private readonly domVideos = new Map<string, HTMLVideoElement>();
   private readonly dataConnections = new Map<string, Peer.DataConnection>();
+  private readonly statusMessage: HTMLParagraphElement;
   private isSpeaking = false;
   private isInitialised = false;
   private mutex: Mutex | null = null;
@@ -65,6 +66,13 @@ class Room {
       throw new Error("videos element was unexpectedly null");
     }
     this.videosRef = videosRef as HTMLVideoElement;
+
+    // Get the status message DOM element
+    const statusMsg = document.getElementById("statusMsg");
+    if (statusMsg === null) {
+      throw new Error("statusMsg element was unexpectedly null");
+    }
+    this.statusMessage = statusMsg as HTMLParagraphElement;
 
     // The following ts-ignore is necessary because we are importing from a CDN,
     // not from npm.
@@ -176,7 +184,6 @@ class Room {
    */
   private onPeerDisconnected = (): void => {
     console.log(`disconnected from server`);
-    // TODO: clean up
   };
 
   /**
@@ -204,7 +211,7 @@ class Room {
    */
   private onCallClose = (peerId: string) => (): void => {
     console.error(`call ${peerId} has disconnected from the call`);
-    // TODO: clean up
+    this.onUserDisconnected(peerId);
   };
 
   /**
@@ -216,7 +223,7 @@ class Room {
     (peerId: string) =>
     (err: any): void => {
       console.error(`call ${peerId} has had an error: ${err}`);
-      // TODO: clean up
+      this.onUserDisconnected(peerId);
     };
 
   private onPeerDataConnection = (conn: Peer.DataConnection): void => {
@@ -340,13 +347,7 @@ class Room {
     };
     this.sendPeerDataToAll(JSON.stringify(msg));
 
-    const speechStatus = document.getElementById(
-      "speakStatus"
-    ) as HTMLParagraphElement;
-    if (speechStatus === null) {
-      throw new Error("Fake status message element was unexpectedly null");
-    }
-    speechStatus.innerText =
+    this.statusMessage.innerText =
       "Received token, 2 seconds to speak before token is potentially passed to next in queue";
     this.isRequested = false;
 
@@ -372,7 +373,7 @@ class Room {
             };
             console.info("Token to send is ", token);
             this.sendPeerData(nextPeerId, JSON.stringify(msg));
-            speechStatus.innerText = "Token sent..";
+            this.statusMessage.innerText = "Token sent..";
           }
         } else {
           console.info("No peers in token's queue. Token stays with me");
@@ -405,19 +406,18 @@ class Room {
   private onPeerDataOpen =
     (peerId: string, conn: Peer.DataConnection) => (): void => {
       this.dataConnections.set(peerId, conn);
-      //this.sendPeerData(peerId, "hello world!");
     };
 
   private onPeerDataError =
     (peerId: string) =>
     (err: any): void => {
       console.error(`data ${peerId} has had an error: ${err}`);
-      // TODO: clean up
+      this.onUserDisconnected(peerId);
     };
 
   private onPeerDataClose = (peerId: string) => (): void => {
     console.warn(`data ${peerId} has closed`);
-    // TODO: clean up
+    this.onUserDisconnected(peerId);
   };
 
   private sendPeerDataToAll = (data: string): void => {
@@ -472,14 +472,9 @@ class Room {
     console.warn("SPEAKING =============================================");
     this.isSpeaking = true;
 
-    const speechStatus = document.getElementById("speakStatus");
-    if (speechStatus === null) {
-      throw new Error("Fake status message element was unexpectedly null");
-    }
-
     console.log("Do I have the token? - ", this.mutex?.doIHaveToken());
     if (this.mutex === null) {
-      speechStatus.innerText = "Token not initialised";
+      this.statusMessage.innerText = "Token not initialised";
       return;
     }
 
@@ -490,7 +485,8 @@ class Room {
     if (!this.mutex?.doIHaveToken() && this.peer !== undefined) {
       if (this.isRequested) {
         // already sent a token request, awaiting response before sending next request
-        speechStatus.innerText = "Waiting for token response before speaking";
+        this.statusMessage.innerText =
+          "Waiting for token response before speaking";
         return;
       }
       let requestMessage: MutexMessage = {
@@ -505,7 +501,7 @@ class Room {
       this.isRequested = true; // set false after receiving response
       console.info("Token request sent to all peers, waiting my turn....");
 
-      speechStatus.innerText =
+      this.statusMessage.innerText =
         "No Token, request sent to all peers, waiting my turn....";
       return;
     }
@@ -514,7 +510,7 @@ class Room {
 
     console.info("I have the power to speak");
     addBorder(this.peer?.id!);
-    speechStatus.innerText = "I have the token, I am speaking...";
+    this.statusMessage.innerText = "I have the token, I am speaking...";
   };
 
   private onStoppedSpeaking = (): void => {
@@ -540,11 +536,6 @@ class Room {
 
     setTimeout(() => {
       if (this.peer !== null) {
-        const speechStatus = document.getElementById("speakStatus");
-        if (speechStatus === null) {
-          throw new Error("Fake status message element was unexpectedly null");
-        }
-
         console.info("Stopped speaking, Releasing critical section");
 
         let nextPeerId = this.mutex?.releaseCriticalSection(this.peer?.id);
@@ -563,7 +554,7 @@ class Room {
           console.info("No peers in token's queue. Token stays with me");
         }
 
-        speechStatus.innerText = "Stopped speaking!";
+        this.statusMessage.innerText = "Stopped speaking!";
         this.isReleased = true; //we set if to false when we are speaking
       }
     }, 1000);
@@ -571,6 +562,12 @@ class Room {
 
   private removeStartButton = (): void => {
     document.getElementById("startMutex")?.remove();
+  };
+
+  private onUserDisconnected = (peerId: string): void => {
+    document.getElementById(peerId)?.remove();
+    this.statusMessage.innerText =
+      "Someone has disconnected - this may have broken the mutual exclusion";
   };
 
   /**

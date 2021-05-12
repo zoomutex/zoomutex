@@ -19,7 +19,13 @@ body {
   position: relative;
   text-align: center;
 }
-#speakStatus{
+
+#statusMsg {
+  color: #CDE7BE;
+  font-family: "Montserrat", sans-serif;
+}
+
+p {
   color: #ce4c35;
 }
 
