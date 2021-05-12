@@ -460,6 +460,7 @@ class Room {
   };
 
   private onSpeaking = async (): Promise<void> => {
+    console.warn("SPEAKING =============================================")
     this.isSpeaking = true;
 
     const speechStatus = document.getElementById("speakStatus");
@@ -507,6 +508,7 @@ class Room {
   };
 
   private onStoppedSpeaking = (): void => {
+    console.warn("STOPPED SPEAKING =============================================")
     this.isSpeaking = false;
 
     // this check prevents repeated calls to mutex.releaseCriticalSection
