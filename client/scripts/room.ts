@@ -39,8 +39,8 @@ class Room {
     // not from npm.
     // @ts-ignore
     this.speechEvents = hark(this.userStream, {});
-    this.speechEvents.setThreshold(-35);
-    this.speechEvents.setInterval(500);
+    this.speechEvents.setThreshold(-40);
+    this.speechEvents.setInterval(250);
     this.speechEvents.on("speaking", this.onSpeaking);
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
@@ -340,7 +340,7 @@ class Room {
       throw new Error("Fake status message element was unexpectedly null");
     }
     speechStatus.innerText =
-      "Received token, 3 seconds to speak before token is potentially passed to next in queue";
+      "Received token, 2 seconds to speak before token is potentially passed to next in queue";
     this.isRequested = false;
 
     // Due to token being passed based on queue order, if I receive the token at
@@ -372,7 +372,7 @@ class Room {
         }
         this.isReleased = true; //we set if to false when we are speaking
       }
-    }, 3000);
+    }, 1000);
   };
 
   private onStartCall = (msg: MutexMessage): void => {
@@ -518,7 +518,12 @@ class Room {
         "I have already released CS and sent token, " +
           "this method is called automatically by 'hark' whenever your audio signals a stopped-speech event"
       );
-      return;
+
+      if (!this.mutex?.doIHaveToken()) {
+        return
+      }
+
+      console.log(this.mutex?.doIHaveToken())
     }
     console.log("Stopped speaking");
 
