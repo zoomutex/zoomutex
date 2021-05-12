@@ -40,6 +40,7 @@ class Room {
     // @ts-ignore
     this.speechEvents = hark(this.userStream, {});
     this.speechEvents.setThreshold(-35);
+    this.speechEvents.setInterval(500);
     this.speechEvents.on("speaking", this.onSpeaking);
     this.speechEvents.on("stopped_speaking", this.onStoppedSpeaking);
 
