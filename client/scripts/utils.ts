@@ -23,3 +23,17 @@ export function getRoomId(): string {
 
   return room;
 }
+
+export const addBorder = (peerId: string): void => {
+  const userVideo = document.getElementById(peerId);
+  if (userVideo) {
+    userVideo.style.border = "5px solid #bda400";
+  }
+};
+
+export const removeBorder = (peerId: string): void => {
+  const userVideo = document.getElementById(peerId);
+  if (userVideo) {
+    userVideo.style.border = "";
+  }
+};

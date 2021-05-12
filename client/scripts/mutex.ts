@@ -1,4 +1,5 @@
 import Token, { IToken } from "./token.js";
+import { removeBorder } from "./utils.js";
 
 type PeerId = string;
 
@@ -9,8 +10,11 @@ export default class Mutex {
    * RN[i]
    */
   private requestSequenceNumbers: Map<PeerId, number>;
+  private self: PeerId;
 
   constructor(peers: PeerId[], self: PeerId) {
+    this.self = self;
+
     // on initialisation, we delegate the token to the first peer in the array
     // every other peer will have an empty token
     if (self === peers[0]) {
@@ -37,6 +41,7 @@ export default class Mutex {
   public getTokenObject(): IToken {
     const token = this.token.toIToken();
     this.removeToken();
+    removeBorder(this.self)
     return token;
   }
 
@@ -136,7 +141,7 @@ export default class Mutex {
     if (this.token.queueSize() >= 0) {
      // console.info(`Popping token queue - ${this.token.printTokenData()}`);
       let nextTokenPeer = this.token.popFromQueue();
-      
+
       return nextTokenPeer;
     }
   }
@@ -200,7 +205,7 @@ export default class Mutex {
     //console.info(`number in request - ${seqNum}`);
     let localSequenceNumber = this.requestSequenceNumbers.get(peerId);
 
-   
+
     let currentExecutionNum = this.token.getSequenceNumber(peerId);
 
     if (localSequenceNumber === undefined) {

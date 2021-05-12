@@ -1,4 +1,9 @@
-import { getRoomId, getUserMediaStream } from "./utils.js";
+import {
+  addBorder,
+  getRoomId,
+  getUserMediaStream,
+  removeBorder,
+} from "./utils.js";
 
 import Mutex from "./mutex.js";
 import type Peer from "peerjs";
@@ -277,7 +282,7 @@ class Room {
   private onUnMute = (peerId: string): void => {
     this.muteAllVideos();
     const tokenUserVideo = document.getElementById(peerId) as HTMLVideoElement;
-
+    addBorder(peerId);
     tokenUserVideo.muted = false;
     console.info("Unmuted - ", peerId);
   };
@@ -326,6 +331,7 @@ class Room {
     }
 
     this.muteAllVideos();
+    addBorder(this.peer?.id!);
 
     const msg: MutexMessage = {
       type: "unMute",
@@ -392,7 +398,7 @@ class Room {
     this.isInitialised = true;
 
     // Remove create token button
-    document.getElementById("startMutex")?.remove()
+    document.getElementById("startMutex")?.remove();
   };
 
   private onPeerDataOpen =
@@ -457,11 +463,12 @@ class Room {
       console.log("Muting all peers");
       const video = document.getElementById(peerId) as HTMLVideoElement;
       video.muted = true;
+      removeBorder(peerId);
     }
   };
 
   private onSpeaking = async (): Promise<void> => {
-    console.warn("SPEAKING =============================================")
+    console.warn("SPEAKING =============================================");
     this.isSpeaking = true;
 
     const speechStatus = document.getElementById("speakStatus");
@@ -505,11 +512,14 @@ class Room {
     this.isReleased = false; // we set it to true when stop speaking
 
     console.info("I have the power to speak");
+    addBorder(this.peer?.id!);
     speechStatus.innerText = "I have the token, I am speaking...";
   };
 
   private onStoppedSpeaking = (): void => {
-    console.warn("STOPPED SPEAKING =============================================")
+    console.warn(
+      "STOPPED SPEAKING ============================================="
+    );
     this.isSpeaking = false;
 
     // this check prevents repeated calls to mutex.releaseCriticalSection
@@ -520,10 +530,10 @@ class Room {
       );
 
       if (!this.mutex?.doIHaveToken()) {
-        return
+        return;
       }
 
-      console.log(this.mutex?.doIHaveToken())
+      console.log(this.mutex?.doIHaveToken());
     }
     console.log("Stopped speaking");
 
