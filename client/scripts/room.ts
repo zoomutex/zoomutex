@@ -112,6 +112,7 @@ class Room {
         message: "",
       };
       this.sendPeerDataToAll(JSON.stringify(unMuteMessage));
+      this.removeStartButton();
     }
   };
 
@@ -398,7 +399,7 @@ class Room {
     this.isInitialised = true;
 
     // Remove create token button
-    document.getElementById("startMutex")?.remove();
+    this.removeStartButton();
   };
 
   private onPeerDataOpen =
@@ -566,6 +567,10 @@ class Room {
         this.isReleased = true; //we set if to false when we are speaking
       }
     }, 1000);
+  };
+
+  private removeStartButton = (): void => {
+    document.getElementById("startMutex")?.remove();
   };
 
   /**

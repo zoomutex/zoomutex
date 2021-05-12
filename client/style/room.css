@@ -22,9 +22,15 @@ body {
 #speakStatus{
   color: #ce4c35;
 }
+
 #videos {
-  position: relative;
-  column-count: 2;
-  text-align: center;
-  padding-bottom: 30px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+video {
+  margin: 2% 4%;
+  padding: 5px;
 }
