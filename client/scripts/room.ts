@@ -389,6 +389,9 @@ class Room {
       "---------------------------------------------------------------------------"
     );
     this.isInitialised = true;
+
+    // Remove create token button
+    document.getElementById("startMutex")?.remove()
   };
 
   private onPeerDataOpen =
