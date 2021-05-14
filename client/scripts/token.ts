@@ -33,7 +33,7 @@ class TokenQueue implements ITokenQueue {
    * @returns
    */
   public deq(): string | undefined {
-    return this.queue.pop();
+    return this.queue.shift();
   }
 
   /**
